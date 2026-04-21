@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doomscroll Bot</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+        :root {
+          --accent: #ff3040;
+          --accent-glow: rgba(255, 48, 64, 0.3);
+          --primary-gradient: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+          --bg: #ffffff;
+          --surface: #fcfcfc;
+          --text-main: #1a1a1b;
+          --text-sub: #8e8e93;
+          --border: #efeff4;
+          --shadow: rgba(0, 0, 0, 0.05);
+          --btn-bg: #f0f0f5;
+        }
+
+        @media (prefers-color-scheme: dark) {
+          :root {
+            --bg: #000000;
+            --surface: #121212;
+            --card-bg: #1c1c1e;
+            --text-main: #ffffff;
+            --text-sub: #8e8e93;
+            --border: #2c2c2e;
+            --shadow: rgba(0, 0, 0, 0.5);
+            --btn-bg: #1c1c1e;
+          }
+        }
+
+        * { box-sizing: border-box; }
+        
+        body {
+          margin: 0; padding: 20px; width: 280px;
+          font-family: 'Inter', -apple-system, sans-serif;
+          background: var(--bg); color: var(--text-main);
+          user-select: none;
+          display: flex; flex-direction: column; align-items: center;
+          overflow: hidden;
+        }
+
+        .header { text-align: center; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; width: 100%; }
+        .ig-logo { width: 18px; height: 18px; fill: url(#ig-grad); }
+        .logo-text { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: var(--text-main); }
+        .alias { position: absolute; bottom: -12px; font-size: 7px; font-weight: 800; color: var(--text-sub); opacity: 0.6; letter-spacing: 1.5px; }
+
+        .mode-badge {
+            font-size: 8px; font-weight: 900; color: var(--accent); border: 1px solid var(--accent); padding: 2px 6px; border-radius: 4px;
+            margin-top: 14px; margin-bottom: 24px; letter-spacing: 0.5px; display: inline-block;
+        }
+
+        .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 30px; width: 100%; }
+        .action-item { position: relative; cursor: pointer; }
+        .action-item input { position: absolute; opacity: 0; }
+        .action-box {
+          display: flex; flex-direction: column; align-items: center; justify-content: center;
+          height: 60px; border-radius: 14px; transition: 0.3s cubic-bezier(0.2, 1, 0.3, 1);
+          background: var(--surface); border: 1px solid var(--border);
+        }
+        .action-item input:checked + .action-box { border-color: var(--accent); background: var(--bg); box-shadow: 0 8px 20px var(--accent-glow); }
+        .action-item svg { width: 20px; height: 20px; fill: var(--text-sub); margin-bottom: 4px; transition: 0.3s; }
+        .action-item input:checked + .action-box svg { fill: #dc2743; }
+        .action-item span { font-size: 9px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; }
+        .action-item input:checked + .action-box span { color: var(--text-main); }
+
+        /* Status Bar - Clean & Centered */
+        .status-bar { 
+            display: flex; align-items: center; justify-content: center; 
+            margin-bottom: 24px; width: 100%; min-height: 36px; padding: 0 10px;
+        }
+        #statusLabel { 
+            font-size: 11px; font-weight: 600; color: var(--text-sub); text-align: center; 
+            line-height: 1.4; transition: 0.3s;
+        }
+        .is-running #statusLabel { color: var(--text-main); }
+
+        /* Circle Play Button - THE LIVE MASTER ENGINE */
+        .controls { margin-bottom: 40px; position: relative; }
+        .btn-main {
+          border: 3px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center;
+          transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); outline: none;
+          width: 92px; height: 92px; border-radius: 50%;
+          background: var(--btn-bg); color: var(--text-main);
+          box-shadow: 0 10px 25px var(--shadow);
+          position: relative; z-index: 2;
+        }
+        
+        /* Pulse Aura Animation */
+        @keyframes pulse-aura {
+            0% { transform: scale(1); opacity: 0.6; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+        
+        .btn-main::before {
+            content: ''; position: absolute; width: 100%; height: 100%;
+            background: inherit; border-radius: 50%; z-index: -1;
+            transition: 0.5s;
+        }
+
+        .btn-main.is-running::before {
+            background: var(--accent);
+            animation: pulse-aura 2s infinite ease-out;
+        }
+        
+        .btn-main.is-paused::before {
+            background: #ff9500;
+            animation: pulse-aura 3s infinite ease-out;
+        }
+
+        .btn-main:hover { transform: scale(1.05); border-color: var(--text-sub); }
+        .btn-main.is-running { background: var(--accent); color: white; border-color: rgba(255,255,255,0.3); box-shadow: 0 15px 35px var(--accent-glow); }
+        .btn-main.is-paused { background: #ff9500; color: white; border-color: rgba(255,255,255,0.3); }
+        
+        #btnCount { font-size: 42px; font-weight: 800; line-height: 1; letter-spacing: -2px; }
+        #btnLabel { font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        #instructions {
+            width: 100%; background: var(--surface); border-radius: 12px; padding: 14px;
+            margin-bottom: 20px; border: 1px solid var(--border); font-size: 10px; line-height: 1.6; color: var(--text-sub);
+            text-align: center;
+        }
+
+        .footer { width: 100%; padding-top: 20px; border-top: 1px solid var(--border); display: flex; justify-content: center; }
+        .github-link { display: flex; align-items: center; gap: 8px; text-decoration: none; font-size: 10px; font-weight: 800; color: var(--text-sub); transition: 0.3s; }
+        .github-link:hover { color: var(--text-main); }
+        .github-link svg { width: 14px; height: 14px; fill: currentColor; }
+    </style>
+</head>
+<body>
+
+<svg style="width:0;height:0;position:absolute;">
+  <linearGradient id="ig-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+    <stop offset="0%" style="stop-color:#f09433" />
+    <stop offset="25%" style="stop-color:#e6683c" />
+    <stop offset="50%" style="stop-color:#dc2743" />
+    <stop offset="75%" style="stop-color:#cc2366" />
+    <stop offset="100%" style="stop-color:#bc1888" />
+  </linearGradient>
+</svg>
+
+<div class="header">
+    <svg class="ig-logo" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.85.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.161-1.666 4.703-4.919 4.85-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.85-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.161 1.665-4.704 4.919-4.85 1.265-.058 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.791-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.209-1.791 4-4 4zm6.406-11.845c.796 0 1.441.645 1.441 1.44s-.645 1.44-1.441 1.44c-.795 0-1.44-.645-1.44-1.44s.645-1.44 1.44-1.44z"/></svg>
+    <span class="logo-text">Doomscroll Bot</span>
+    <span class="alias">THE ULTIMATE HISTORY REWRITER</span>
+</div>
+
+<span class="mode-badge">CHOOSE ACTIVITIES</span>
+
+<div class="action-grid">
+    <label class="action-item">
+        <input type="checkbox" name="action" value="LIKE" checked>
+        <div class="action-box">
+            <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            <span>Like</span>
+        </div>
+    </label>
+    <label class="action-item">
+        <input type="checkbox" name="action" value="REPOST">
+        <div class="action-box">
+            <svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+            <span>Repost</span>
+        </div>
+    </label>
+    <label class="action-item">
+        <input type="checkbox" name="action" value="SAVE">
+        <div class="action-box">
+            <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+            <span>Save</span>
+        </div>
+    </label>
+</div>
+
+<div id="statusLabelWrap" class="status-bar">
+    <span id="statusLabel">System Idle</span>
+</div>
+
+<div class="controls">
+    <button id="btnPlay" class="btn-main">
+        <span id="btnLabel">START</span>
+        <span id="btnCount" style="display:none">0</span>
+    </button>
+</div>
+
+<div id="instructions">
+    MISSION: To provide an automated way to manage your digital footprint and refine your past interactions on your own terms.
+</div>
+
+<div class="footer">
+    <a href="https://github.com/publicwasant/reposts-cleaner" target="_blank" class="github-link">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.419 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z"/></svg>
+        <span>GitHub Open Source</span>
+    </a>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>
