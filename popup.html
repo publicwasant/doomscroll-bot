@@ -36,7 +36,7 @@
         * { box-sizing: border-box; }
         
         body {
-          margin: 0; padding: 20px; width: 280px;
+          margin: 0; padding: 16px 20px; width: 280px;
           font-family: 'Inter', -apple-system, sans-serif;
           background: var(--bg); color: var(--text-main);
           user-select: none;
@@ -44,88 +44,82 @@
           overflow: hidden;
         }
 
-        .header { text-align: center; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; width: 100%; }
+        .header { text-align: center; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; width: 100%; }
         .ig-logo { width: 18px; height: 18px; fill: url(#ig-grad); }
         .logo-text { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: var(--text-main); }
         .alias { position: absolute; bottom: -12px; font-size: 7px; font-weight: 800; color: var(--text-sub); opacity: 0.6; letter-spacing: 1.5px; }
 
         .mode-badge {
             font-size: 8px; font-weight: 900; color: var(--accent); border: 1px solid var(--accent); padding: 2px 6px; border-radius: 4px;
-            margin-top: 14px; margin-bottom: 24px; letter-spacing: 0.5px; display: inline-block;
+            margin-top: 14px; margin-bottom: 20px; letter-spacing: 0.5px; display: inline-block;
         }
 
-        .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 30px; width: 100%; }
+        .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; width: 100%; }
         .action-item { position: relative; cursor: pointer; }
         .action-item input { position: absolute; opacity: 0; }
         .action-box {
           display: flex; flex-direction: column; align-items: center; justify-content: center;
-          height: 60px; border-radius: 14px; transition: 0.3s cubic-bezier(0.2, 1, 0.3, 1);
+          height: 56px; border-radius: 14px; transition: 0.3s cubic-bezier(0.2, 1, 0.3, 1);
           background: var(--surface); border: 1px solid var(--border);
         }
         .action-item input:checked + .action-box { border-color: var(--accent); background: var(--bg); box-shadow: 0 8px 20px var(--accent-glow); }
-        .action-item svg { width: 20px; height: 20px; fill: var(--text-sub); margin-bottom: 4px; transition: 0.3s; }
+        .action-item svg { width: 18px; height: 18px; fill: var(--text-sub); margin-bottom: 4px; transition: 0.3s; }
         .action-item input:checked + .action-box svg { fill: #dc2743; }
         .action-item span { font-size: 9px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; }
         .action-item input:checked + .action-box span { color: var(--text-main); }
 
-        /* Status Bar - Clean & Centered */
+        /* Status Bar - Soft & Center */
         .status-bar { 
             display: flex; align-items: center; justify-content: center; 
-            margin-bottom: 24px; width: 100%; min-height: 36px; padding: 0 10px;
+            margin-bottom: 16px; width: 100%; min-height: 32px; padding: 0 10px;
         }
         #statusLabel { 
-            font-size: 11px; font-weight: 600; color: var(--text-sub); text-align: center; 
+            font-size: 11px; font-weight: 500; color: var(--text-sub); text-align: center; 
             line-height: 1.4; transition: 0.3s;
         }
-        .is-running #statusLabel { color: var(--text-main); }
 
-        /* Circle Play Button - THE LIVE MASTER ENGINE */
-        .controls { margin-bottom: 40px; position: relative; }
+        /* Master Engine Button */
+        .controls { margin-bottom: 28px; position: relative; }
         .btn-main {
           border: 3px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center;
           transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); outline: none;
-          width: 92px; height: 92px; border-radius: 50%;
+          width: 88px; height: 88px; border-radius: 50%;
           background: var(--btn-bg); color: var(--text-main);
           box-shadow: 0 10px 25px var(--shadow);
           position: relative; z-index: 2;
         }
         
-        /* Pulse Aura Animation */
         @keyframes pulse-aura {
-            0% { transform: scale(1); opacity: 0.6; }
+            0% { transform: scale(1); opacity: 0.7; }
             100% { transform: scale(1.6); opacity: 0; }
         }
-        
         .btn-main::before {
             content: ''; position: absolute; width: 100%; height: 100%;
             background: inherit; border-radius: 50%; z-index: -1;
             transition: 0.5s;
         }
-
-        .btn-main.is-running::before {
-            background: var(--accent);
-            animation: pulse-aura 2s infinite ease-out;
-        }
-        
-        .btn-main.is-paused::before {
-            background: #ff9500;
-            animation: pulse-aura 3s infinite ease-out;
-        }
+        .btn-main.is-running::before { background: var(--accent); animation: pulse-aura 2s infinite ease-out; }
+        .btn-main.is-paused::before { background: #ff9500; animation: pulse-aura 3s infinite ease-out; }
 
         .btn-main:hover { transform: scale(1.05); border-color: var(--text-sub); }
         .btn-main.is-running { background: var(--accent); color: white; border-color: rgba(255,255,255,0.3); box-shadow: 0 15px 35px var(--accent-glow); }
         .btn-main.is-paused { background: #ff9500; color: white; border-color: rgba(255,255,255,0.3); }
         
         #btnCount { font-size: 42px; font-weight: 800; line-height: 1; letter-spacing: -2px; }
-        #btnLabel { font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        #btnLabel { font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
 
+        /* Instruction Card - Compact with Icon */
         #instructions {
-            width: 100%; background: var(--surface); border-radius: 12px; padding: 14px;
-            margin-bottom: 20px; border: 1px solid var(--border); font-size: 10px; line-height: 1.6; color: var(--text-sub);
-            text-align: center;
+            width: 100%; background: var(--surface); border-radius: 12px; padding: 12px;
+            margin-bottom: 12px; border: 1px solid var(--border); font-size: 9.5px; line-height: 1.4; color: var(--text-sub);
+            position: relative;
+            display: flex; gap: 10px; align-items: flex-start;
         }
+        .instr-icon { flex-shrink: 0; margin-top: 2px; color: var(--text-sub); opacity: 0.7; }
+        .instr-body { text-align: left; }
+        .instr-body b { color: inherit; filter: brightness(1.1); font-weight: 800; }
 
-        .footer { width: 100%; padding-top: 20px; border-top: 1px solid var(--border); display: flex; justify-content: center; }
+        .footer { width: 100%; padding-top: 15px; border-top: 1px solid var(--border); display: flex; justify-content: center; }
         .github-link { display: flex; align-items: center; gap: 8px; text-decoration: none; font-size: 10px; font-weight: 800; color: var(--text-sub); transition: 0.3s; }
         .github-link:hover { color: var(--text-main); }
         .github-link svg { width: 14px; height: 14px; fill: currentColor; }
@@ -175,7 +169,7 @@
     </label>
 </div>
 
-<div id="statusLabelWrap" class="status-bar">
+<div class="status-bar">
     <span id="statusLabel">System Idle</span>
 </div>
 
@@ -187,11 +181,16 @@
 </div>
 
 <div id="instructions">
-    MISSION: To provide an automated way to manage your digital footprint and refine your past interactions on your own terms.
+    <div class="instr-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6m-6 3h6M12 2a7 7 0 0 0-7 7c0 2.45 1.5 4.34 3 5.5V18h8v-3.5c1.5-1.16 3-3.05 3-5.5a7 7 0 0 0-7-7z"></path></svg>
+    </div>
+    <div class="instr-body">
+        <b>MISSION:</b> Refine your digital history on your own terms. Human-like pacing is enforced for account safety.
+    </div>
 </div>
 
 <div class="footer">
-    <a href="https://github.com/publicwasant/reposts-cleaner" target="_blank" class="github-link">
+    <a href="https://github.com/publicwasant/doomscroll-bot" target="_blank" class="github-link">
         <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.419 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z"/></svg>
         <span>GitHub Open Source</span>
     </a>

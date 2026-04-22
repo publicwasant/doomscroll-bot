@@ -1,6 +1,10 @@
 # 🕵️‍♂️ Doomscroll Bot
 ### *The Ultimate History Rewriter*
 
+<p align="center">
+  <img src="Screenshot.png" alt="Doomscroll Bot Interface" width="300">
+</p>
+
 **Doomscroll Bot** is a high-end, minimalist Chrome Extension designed for those who want to curate their digital legacy. It provides a seamless, automated way to manage your past interactions on Instagram—allowing you to "rewrite" your history by undoing likes, reposts, and saves with surgical precision and human-like behavior.
 
 ---
@@ -45,7 +49,7 @@ A minimalist "Glassmorphism" UI that talks to you.
 1. **Target:** Open Instagram and navigate to **"Your Activity"** (or your Profile/Specific Feed).
 2. **Select:** Open the Doomscroll Bot popup and check the activities you wish to redact.
 3. **Initiate:** Press the large **START** circle in the center.
-4. **Observe:** Watch as the engine rewrites your history. You can switch actions or **Pause/Resume** at any time.
+4. **Observe:** Watch as the engine rewrites your history.
 
 ---
 
@@ -63,7 +67,7 @@ This project is for educational and personal curation purposes only. It is an op
 ---
 
 ## 👨‍💻 Author
-Built with passion by **[privatewasant](https://github.com/publicwasant)**.
+Built with passion by **[privatewasant](https://github.com/publicwasant/doomscroll-bot)**.
 *"Rewriting history, one post at a time."*
 
 ---
