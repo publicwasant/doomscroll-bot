@@ -1,14 +1,6 @@
 # 🕵️‍♂️ Doomscroll Bot v2.0.0
 ### *The Ultimate Triple-Thread Web Automation Framework*
 
-<p align="center">
-  <img src="assets/screenshot-v1.3.0/Screenshot%202569-04-22%20at%2017.18.50.png" width="180">
-  <img src="assets/screenshot-v1.3.0/Screenshot%202569-04-22%20at%2017.19.39.png" width="180">
-  <br>
-  <img src="assets/screenshot-v1.3.0/Screenshot%202569-04-22%20at%2017.19.44.png" width="180">
-  <img src="assets/screenshot-v1.3.0/Screenshot%202569-04-22%20at%2017.19.51.png" width="180">
-</p>
-
 **Doomscroll Bot** is a professional-grade Chrome Extension designed for high-precision digital legacy curation. Unlike standard scripts, v2.0.0 introduces a **Modular Universal Framework** that mimics human behavior while building an autonomous intelligence database of your social interactions.
 
 ---
