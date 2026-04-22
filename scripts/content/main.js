@@ -8,7 +8,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             running: window.engine.running, 
             stats: window.engine.stats, 
             currentAction: window.engine.currentActions, 
-            supported: isSupportedPage() 
+            supported: isSupportedPage(),
+            filters: window.engine.filters
         });
         return;
     }
@@ -27,6 +28,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     
     if (msg.type === "UPDATE_CONFIG") {
         window.engine.updateConfig(msg.actions, msg.filters);
+        sendResponse({ status: "ok" });
+    }
+
+    if (msg.type === "RESET_ENGINE") {
+        window.engine.resetInternalState();
         sendResponse({ status: "ok" });
     }
     

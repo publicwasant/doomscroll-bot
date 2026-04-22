@@ -12,21 +12,26 @@ const SELECTORS = {
 
 class DoomscrollEngine {
     constructor() {
-        this.running = false;
-        this.currentActions = [];
-        this.filters = {
-            tags: [], 
-            mode: 'EXCLUDE' 
-        };
-        this.processedLinks = new Set();
-        this.observedUsers = new Set();
-        this.stats = { done: 0, success: 0, posts: 0, reels: 0, fail: 0 };
-        
+        this.resetInternalState();
         this.initObserver();
     }
 
+    resetInternalState() {
+        this.running = false;
+        this.currentActions = ["LIKE"];
+        this.filters = {
+            tags: [], 
+            condition: 'NONE' 
+        };
+        this.processedLinks = new Set();
+        this.observedUsers = new Set();
+        this.observedHashtags = new Set();
+        this.stats = { done: 0, success: 0, posts: 0, reels: 0, fail: 0 };
+    }
+
     initObserver() {
-        const scan = () => {
+        const scan = async () => {
+            // Observe Users from links
             const links = document.querySelectorAll('a[href^="/"]');
             links.forEach(link => {
                 const path = link.getAttribute('href');
@@ -37,6 +42,28 @@ class DoomscrollEngine {
                     if (!reserved.includes(username) && !username.includes('?')) {
                         this.addObservedUser(username);
                     }
+                }
+            });
+
+            // Observe Hashtags from links (e.g., /explore/tags/travel/)
+            const hashtagLinks = document.querySelectorAll('a[href*="/explore/tags/"]');
+            hashtagLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                const match = href.match(/\/explore\/tags\/([^/?#]+)/);
+                if (match && match[1]) {
+                    this.addObservedHashtag(decodeURIComponent(match[1]));
+                }
+            });
+
+            // Fallback: Observe Hashtags from visible text content (Improved Regex)
+            const captions = document.querySelectorAll(SELECTORS.caption);
+            captions.forEach(el => {
+                const text = el.innerText;
+                // Match # followed by word characters or Thai characters
+                const hashtagRegex = /#([a-zA-Z0-9_ก-๙]+)/g; 
+                let match;
+                while ((match = hashtagRegex.exec(text)) !== null) {
+                    this.addObservedHashtag(match[1]);
                 }
             });
         };
@@ -55,6 +82,19 @@ class DoomscrollEngine {
         }
     }
 
+    async addObservedHashtag(tag) {
+        const lowerTag = tag.toLowerCase();
+        if (!this.observedHashtags.has(lowerTag)) {
+            this.observedHashtags.add(lowerTag);
+            const { hashtagList = [] } = await chrome.storage.local.get("hashtagList");
+            if (!hashtagList.includes(lowerTag)) {
+                const newList = [lowerTag, ...hashtagList].slice(0, 100);
+                await chrome.storage.local.set({ hashtagList: newList });
+                console.log("Found Hashtag:", lowerTag); // For Debugging
+            }
+        }
+    }
+
     async checkStatus() {
         if (!this.running) throw new Error("BOT_STOPPED");
     }
@@ -65,7 +105,8 @@ class DoomscrollEngine {
             stats: this.stats,
             msg: customMsg,
             running: this.running,
-            supported: isSupportedPage()
+            supported: isSupportedPage(),
+            filters: this.filters
         });
     }
 
@@ -132,22 +173,44 @@ class DoomscrollEngine {
     }
 
     shouldProcessPost(data) {
-        if (this.filters.tags.length === 0) return true;
+        const { tags, condition } = this.filters;
+        const caption = (data.caption || "").toLowerCase();
+        const owner = (data.owner || "").toLowerCase();
 
-        const hasKeywordMatch = this.filters.tags
-            .filter(t => t.type === 'keyword')
-            .some(t => data.caption.toLowerCase().includes(t.value.toLowerCase()));
+        const hasKeywordMatch = (val) => tags.some(t => t.type === 'keyword' && val.includes(t.value.toLowerCase()));
+        const isKeywordExactMatch = (val) => tags.some(t => t.type === 'keyword' && val.trim() === t.value.toLowerCase().trim());
+        const isUserMatch = (val) => tags.some(t => t.type === 'user' && val === t.value.toLowerCase());
+        const isHashtagMatch = (val) => tags.some(t => t.type === 'hashtag' && val.includes('#' + t.value.toLowerCase()));
+
+        const checkMatch = () => {
+            return hasKeywordMatch(caption) || isUserMatch(owner) || isHashtagMatch(caption);
+        };
         
-        const hasUserMatch = this.filters.tags
-            .filter(t => t.type === 'user')
-            .some(t => t.value.toLowerCase() === data.owner.toLowerCase());
+        const checkExactMatch = () => {
+            return isKeywordExactMatch(caption) || isUserMatch(owner) || isHashtagMatch(caption);
+        };
 
-        const isMatched = hasKeywordMatch || hasUserMatch;
-
-        if (this.filters.mode === 'ONLY_MATCH') {
-            return isMatched;
-        } else {
-            return !isMatched; 
+        switch (condition) {
+            case 'NONE':
+                return true;
+            case 'CONTAINS':
+                if (tags.length === 0) return true;
+                return checkMatch();
+            case 'DOES_NOT_CONTAIN':
+                if (tags.length === 0) return true;
+                return !checkMatch();
+            case 'IS':
+                if (tags.length === 0) return true;
+                return checkExactMatch();
+            case 'IS_NOT':
+                if (tags.length === 0) return true;
+                return !checkExactMatch();
+            case 'IS_EMPTY':
+                return caption.trim() === "";
+            case 'IS_NOT_EMPTY':
+                return caption.trim() !== "";
+            default:
+                return true;
         }
     }
 

@@ -18,7 +18,7 @@
           --text-sub: #65676b;
           --border: #e4e6eb;
           --tag-bg: #f2f2f3;
-          --tag-user: #0095f6;
+          --tag-link: #0095f6; /* IG Link Blue */
           --tag-kw: var(--text-main);
           --radius-lg: 16px;
           --radius-md: 12px;
@@ -71,6 +71,16 @@
         .alias { font-size: 8px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8; }
         .version { position: absolute; top: -10px; right: -10px; font-size: 9px; font-weight: 600; color: var(--text-sub); opacity: 0.5; }
 
+        .btn-reset-container {
+            position: absolute; top: -10px; left: -10px;
+        }
+        .btn-reset {
+            background: none; border: none; padding: 4px; cursor: pointer;
+            color: var(--text-sub); opacity: 0.3; transition: 0.2s;
+        }
+        .btn-reset:hover { opacity: 1; color: var(--accent); }
+        .btn-reset svg { width: 14px; height: 14px; fill: currentColor; }
+
         .section-label {
             font-size: 11px; font-weight: 700; color: var(--text-sub); 
             margin: 16px 0 10px 0; letter-spacing: 0.3px;
@@ -94,22 +104,52 @@
         .action-item input:checked + .action-box svg { fill: var(--accent); transform: scale(1.1); }
         .action-item span { font-size: 10px; font-weight: 600; color: var(--text-sub); }
 
-        .filter-container { width: 100%; position: relative; }
+        .filter-container { width: 100%; position: relative; margin-top: 16px; }
         
-        .segmented-control { 
-            display: flex; background: var(--surface); border-radius: 10px; 
-            padding: 3px; margin-bottom: 12px; border: 1px solid var(--border);
-        }
-        .segment-btn { 
-            flex: 1; font-size: 10px; font-weight: 700; padding: 8px; border-radius: 7px; 
-            cursor: pointer; text-align: center; color: var(--text-sub); transition: 0.2s;
-        }
-        .segment-btn.active { 
-            background: var(--bg); color: var(--text-main); 
-            box-shadow: var(--shadow-sm);
+        .filter-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px;
         }
 
-        .input-group { position: relative; width: 100%; }
+        /* Custom Dropdown Styles */
+        .custom-dropdown { position: relative; }
+        .dropdown-trigger {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-main);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 4px;
+            transition: 0.2s;
+        }
+        .dropdown-trigger:hover { background: var(--surface-hover); border-color: var(--text-sub); }
+        .dropdown-trigger .chevron { width: 12px; height: 12px; fill: var(--text-sub); }
+        
+        .dropdown-menu {
+            position: absolute; top: 100%; right: 0; z-index: 110;
+            background: var(--bg); border: 1px solid var(--border);
+            border-radius: var(--radius-md); margin-top: 8px; width: 160px;
+            box-shadow: var(--shadow-md); display: none;
+            overflow: hidden;
+        }
+        .dropdown-item {
+            padding: 10px 16px; font-size: 12px; font-weight: 500;
+            cursor: pointer; border-bottom: 1px solid var(--border);
+            transition: 0.2s; color: var(--text-main);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item:hover { background: var(--surface); }
+        .dropdown-item.active { color: var(--tag-link); font-weight: 700; }
+        .dropdown-item svg { width: 14px; height: 14px; fill: currentColor; visibility: hidden; }
+        .dropdown-item.active svg { visibility: visible; }
+
+        .input-group { position: relative; width: 100%; transition: opacity 0.3s, transform 0.3s; }
+        .input-group.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; height: 0; margin: 0; overflow: hidden; }
+
         #filterInput {
             width: 100%; background: var(--surface); border: 1px solid var(--border);
             border-radius: var(--radius-md); padding: 12px 16px; font-size: 13px; 
@@ -130,12 +170,14 @@
         }
         .suggestion-item:last-child { border-bottom: none; }
         .suggestion-item:hover, .suggestion-item.selected { background: var(--surface); }
-        .suggestion-item b { color: var(--tag-user); }
+        .suggestion-item b { color: var(--tag-link); }
 
         .tags-display-wrapper {
             position: relative; margin-top: 10px; width: 100%;
             overflow: hidden;
+            transition: opacity 0.3s;
         }
+        .tags-display-wrapper.hidden { opacity: 0; height: 0; margin: 0; overflow: hidden; }
         .tags-display-wrapper::after {
             content: ''; position: absolute; right: 0; top: 0; bottom: 0;
             width: 40px; pointer-events: none;
@@ -157,7 +199,16 @@
             border: 1px solid var(--border);
             transition: 0.2s;
         }
-        .tag.tag-user { color: var(--tag-user); border-color: rgba(0, 149, 246, 0.2); background: transparent; }
+        .tag.tag-user, .tag.tag-hashtag { 
+            color: var(--tag-link); 
+            border-color: rgba(0, 149, 246, 0.2); 
+            background: transparent;
+            cursor: pointer;
+        }
+        .tag.tag-user:hover, .tag.tag-hashtag:hover {
+            text-decoration: underline;
+            border-color: var(--tag-link);
+        }
         .tag.tag-kw { 
             color: var(--text-main); 
             background: var(--tag-bg); 
@@ -165,7 +216,7 @@
         }
         
         .tag-remove { cursor: pointer; opacity: 0.4; font-size: 12px; margin-left: 1px; }
-        .tag-remove:hover { opacity: 1; }
+        .tag-remove:hover { opacity: 1; text-decoration: none !important; }
 
         .bot-center { 
           display: flex; flex-direction: column; align-items: center; 
@@ -178,7 +229,7 @@
           border: 4px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center;
           transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); outline: none;
           width: 90px; height: 90px; border-radius: 50%;
-          background: var(--surface); color: var(--text-main);
+          background: var(--tag-link); color: white;
           box-shadow: var(--shadow-md); position: relative;
         }
         .btn-main:hover { transform: scale(1.04); }
@@ -188,16 +239,18 @@
             border-radius: 50%; border: 2px solid var(--accent);
             animation: ripple 2s infinite;
         }
+        .btn-main svg { width: 32px; height: 32px; fill: currentColor; }
+
         @keyframes ripple { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.6); opacity: 0; } }
 
         #btnCount { font-size: 40px; font-weight: 800; letter-spacing: -2px; }
-        #btnLabel { font-size: 15px; font-weight: 800; letter-spacing: 1px; }
 
         .hint-box {
             background: var(--surface); border-radius: var(--radius-md); padding: 12px;
             margin-bottom: 20px; border: 1px solid var(--border); font-size: 11px; 
-            line-height: 1.4; color: var(--text-sub); display: flex; gap: 10px;
+            line-height: 1.4; color: var(--text-sub); display: flex; gap: 10px; align-items: flex-start;
         }
+        .hint-box svg { width: 16px; height: 16px; fill: var(--tag-link); flex-shrink: 0; margin-top: 1px; }
 
         .footer { 
           padding-top: 16px; border-top: 1px solid var(--border); 
@@ -223,11 +276,16 @@
 </svg>
 
 <div class="header">
+    <div class="btn-reset-container">
+        <button id="btnReset" class="btn-reset" title="Factory Reset (Clear All)">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.59-13L12 10.59 8.41 7 7 8.41 10.59 12 7 15.59 8.41 17 12 13.41 15.59 17 17 15.59 13.41 12 17 8.41 15.59 7z"/></svg>
+        </button>
+    </div>
     <div class="header-top">
         <svg class="ig-logo" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.85.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.161-1.666 4.703-4.919 4.85-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.85-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.161 1.665-4.704 4.919-4.85 1.265-.058 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.791-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.209-1.791 4-4 4zm6.406-11.845c.796 0 1.441.645 1.441 1.44s-.645 1.44-1.441 1.44c-.795 0-1.44-.645-1.44-1.44s.645-1.44 1.44-1.44z"/></svg>
         <span class="logo-text">Doomscroll Bot</span>
     </div>
-    <span class="alias">The History Redactor</span>
+    <span class="alias">Based DOM Automation</span>
     <span class="version">v<span id="versionLabel">1.2.1</span></span>
 </div>
 
@@ -256,19 +314,27 @@
     </label>
 </div>
 
-<div class="section-label">Redaction Filters</div>
 <div class="filter-container">
-    <div class="segmented-control">
-        <div class="segment-btn active" data-mode="EXCLUDE">EXCLUDE</div>
-        <div class="segment-btn" data-mode="ONLY_MATCH">ONLY MATCH</div>
+    <div class="filter-header">
+        <div class="section-label" style="margin: 0;">Redaction Filters</div>
+        
+        <div class="custom-dropdown" id="conditionDropdown">
+            <div class="dropdown-trigger" id="conditionTrigger">
+                <span id="currentConditionText">none</span>
+                <svg viewBox="0 0 24 24" class="chevron"><path d="M7 10l5 5 5-5z"/></svg>
+            </div>
+            <div class="dropdown-menu" id="conditionMenu">
+                <!-- Condition Items dynamically populated -->
+            </div>
+        </div>
     </div>
     
-    <div class="input-group">
-        <input type="text" id="filterInput" placeholder="Keyword or @username" autocomplete="off">
+    <div id="filterInputGroup" class="input-group">
+        <input type="text" id="filterInput" placeholder="Keyword, @user, or #hashtag" autocomplete="off">
         <div id="suggestionBox" class="suggestions"></div>
     </div>
 
-    <div class="tags-display-wrapper">
+    <div id="tagsDisplayWrapper" class="tags-display-wrapper">
         <div id="tagsDisplay" class="tags-display"></div>
     </div>
 </div>
@@ -279,13 +345,16 @@
     </div>
     
     <button id="btnPlay" class="btn-main">
-        <span id="btnLabel">INITIATE</span>
+        <span id="btnLabel">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </span>
         <span id="btnCount" style="display:none">0</span>
     </button>
 </div>
 
 <div class="hint-box">
-    <div><b>Tip:</b> Targeted redaction uses <b>Only Match</b> mode to process specific items.</div>
+    <svg viewBox="0 0 24 24"><path d="M12 2c-3.859 0-7 3.141-7 7 0 1.825.698 3.482 1.841 4.735l.159.174v2.091c0 .552.448 1 1 1h8c.552 0 1-.448 1-1v-2.091l.159-.174c1.143-1.253 1.841-2.91 1.841-4.735 0-3.859-3.141-7-7-7zm2 14h-4v-1h4v1zm1.159-4.265c-.104.114-.159.262-.159.414v.851h-6v-.851c0-.152-.055-.3-.159-.414-1.01-1.107-1.574-2.544-1.574-4.116 0-3.309 2.691-6 6-6s6 2.691 6 6c0 1.572-.564 3.009-1.574 4.116z"/></svg>
+    <div>Support <b>@username</b> and <b>#hashtag</b> for precise targeting. Click tags to view on Instagram.</div>
 </div>
 
 <div class="footer">

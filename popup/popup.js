@@ -4,6 +4,16 @@
 
 class PopupViewModel {
     constructor() {
+        this.conditions = [
+            { id: 'NONE', label: 'none' },
+            { id: 'CONTAINS', label: 'contains' },
+            { id: 'DOES_NOT_CONTAIN', label: 'does not contain' },
+            { id: 'IS', label: 'is' },
+            { id: 'IS_NOT', label: 'is not' },
+            { id: 'IS_EMPTY', label: 'is empty' },
+            { id: 'IS_NOT_EMPTY', label: 'is not empty' }
+        ];
+
         this.state = {
             isRunning: false,
             stats: { success: 0 },
@@ -11,11 +21,12 @@ class PopupViewModel {
             selectedActions: ["LIKE"],
             filters: {
                 tags: [], 
-                mode: 'EXCLUDE'
+                condition: 'NONE'
             },
             version: chrome.runtime.getManifest().version,
             suggestions: [],
-            selectedSuggestIdx: -1
+            selectedSuggestIdx: -1,
+            isDropdownOpen: false
         };
 
         this.elements = {
@@ -26,17 +37,28 @@ class PopupViewModel {
             versionLabel: document.getElementById("versionLabel"),
             actionInputs: document.querySelectorAll('input[name="action"]'),
             filterInput: document.getElementById("filterInput"),
+            filterInputGroup: document.getElementById("filterInputGroup"),
             suggestionBox: document.getElementById("suggestionBox"),
             tagsDisplay: document.getElementById("tagsDisplay"),
-            modeBtns: document.querySelectorAll(".segment-btn")
+            tagsDisplayWrapper: document.getElementById("tagsDisplayWrapper"),
+            btnReset: document.getElementById("btnReset"),
+            
+            conditionTrigger: document.getElementById("conditionTrigger"),
+            conditionMenu: document.getElementById("conditionMenu"),
+            currentConditionText: document.getElementById("currentConditionText")
         };
 
         this.lastRenderedTags = "";
         this.init();
     }
 
-    init() {
+    async init() {
         if (this.elements.versionLabel) this.elements.versionLabel.textContent = this.state.version;
+
+        // Load persisted state from storage
+        const saved = await chrome.storage.local.get(["filters", "selectedActions"]);
+        if (saved.filters) this.state.filters = saved.filters;
+        if (saved.selectedActions) this.state.selectedActions = saved.selectedActions;
 
         this.elements.btnPlay.onclick = () => this.toggleWorkflow();
         
@@ -44,18 +66,57 @@ class PopupViewModel {
             input.onchange = () => this.updateSelectedActions();
         });
 
-        this.elements.modeBtns.forEach(btn => {
-            btn.onclick = () => {
-                this.state.filters.mode = btn.dataset.mode;
-                this.render();
-                this.syncConfigWithContent();
-            };
-        });
+        this.elements.conditionTrigger.onclick = (e) => {
+            e.stopPropagation();
+            this.state.isDropdownOpen = !this.state.isDropdownOpen;
+            this.render();
+        };
+
+        if (this.elements.btnReset) {
+            this.elements.btnReset.onclick = () => this.factoryReset();
+        }
 
         this.initFilterInput();
         this.initDragToScroll();
+        
+        document.addEventListener('click', () => {
+            if (this.state.isDropdownOpen) {
+                this.state.isDropdownOpen = false;
+                this.render();
+            }
+        });
+
         chrome.runtime.onMessage.addListener((msg) => this.handleRuntimeMessages(msg));
+        
+        this.render();
         this.fetchCurrentState();
+    }
+
+    async factoryReset() {
+        if (!confirm("Factory Reset? This will clear all filters, stats, and observed usernames.")) return;
+        
+        const tab = await this.getActiveTab();
+        if (tab) chrome.tabs.sendMessage(tab.id, { type: "STOP" });
+
+        await chrome.storage.local.clear();
+
+        this.state = {
+            ...this.state,
+            isRunning: false,
+            stats: { success: 0 },
+            statusMessage: "System Standby",
+            selectedActions: ["LIKE"],
+            filters: {
+                tags: [], 
+                condition: 'NONE'
+            },
+            suggestions: [],
+            selectedSuggestIdx: -1
+        };
+
+        this.render();
+        
+        if (tab) chrome.tabs.sendMessage(tab.id, { type: "RESET_ENGINE" });
     }
 
     initFilterInput() {
@@ -68,7 +129,17 @@ class PopupViewModel {
                 const { observedList = [] } = await chrome.storage.local.get("observedList");
                 this.state.suggestions = observedList
                     .filter(u => u.toLowerCase().includes(query))
+                    .map(u => ({ type: 'user', value: u }))
                     .slice(0, 15); 
+                this.state.selectedSuggestIdx = -1;
+                this.renderSuggestions();
+            } else if (val.startsWith('#')) {
+                const query = val.slice(1).toLowerCase();
+                const { hashtagList = [] } = await chrome.storage.local.get("hashtagList");
+                this.state.suggestions = hashtagList
+                    .filter(h => h.toLowerCase().includes(query))
+                    .map(h => ({ type: 'hashtag', value: h }))
+                    .slice(0, 15);
                 this.state.selectedSuggestIdx = -1;
                 this.renderSuggestions();
             } else {
@@ -88,7 +159,8 @@ class PopupViewModel {
                     this.renderSuggestions();
                 } else if (e.key === "Enter" && this.state.selectedSuggestIdx >= 0) {
                     e.preventDefault();
-                    this.addTag('user', this.state.suggestions[this.state.selectedSuggestIdx]);
+                    const s = this.state.suggestions[this.state.selectedSuggestIdx];
+                    this.addTag(s.type, s.value);
                     return;
                 }
             }
@@ -97,6 +169,8 @@ class PopupViewModel {
                 const val = input.value.trim();
                 if (val.startsWith('@')) {
                     this.addTag('user', val.slice(1));
+                } else if (val.startsWith('#')) {
+                    this.addTag('hashtag', val.slice(1));
                 } else {
                     this.addTag('keyword', val);
                 }
@@ -134,7 +208,6 @@ class PopupViewModel {
             slider.scrollLeft = scrollLeft - walk;
         });
         
-        // Horizontal scroll with mouse wheel
         slider.addEventListener('wheel', (e) => {
             if (e.deltaY !== 0) {
                 e.preventDefault();
@@ -143,15 +216,13 @@ class PopupViewModel {
         });
     }
 
-    addTag(type, value) {
+    async addTag(type, value) {
         if (!value) return;
         const exists = this.state.filters.tags.some(t => t.type === type && t.value === value);
         if (!exists) {
             this.state.filters.tags.push({ type, value });
-            this.render();
-            this.syncConfigWithContent();
+            await this.persistAndSync();
             
-            // Auto scroll to end when new tag added
             setTimeout(() => {
                 this.elements.tagsDisplay.scrollTo({
                     left: this.elements.tagsDisplay.scrollWidth,
@@ -163,10 +234,9 @@ class PopupViewModel {
         this.hideSuggestions();
     }
 
-    removeTag(index) {
+    async removeTag(index) {
         this.state.filters.tags.splice(index, 1);
-        this.render();
-        this.syncConfigWithContent();
+        await this.persistAndSync();
     }
 
     renderSuggestions() {
@@ -178,7 +248,7 @@ class PopupViewModel {
 
         box.innerHTML = this.state.suggestions.map((s, i) => `
             <div class="suggestion-item ${i === this.state.selectedSuggestIdx ? 'selected' : ''}" data-index="${i}">
-                @<b>${s}</b>
+                <span>${s.type === 'user' ? '@' : '#'}<b>${s.value}</b></span>
             </div>
         `).join('');
         
@@ -190,7 +260,10 @@ class PopupViewModel {
         }
 
         box.querySelectorAll('.suggestion-item').forEach(item => {
-            item.onclick = () => this.addTag('user', this.state.suggestions[item.dataset.index]);
+            item.onclick = () => {
+                const s = this.state.suggestions[item.dataset.index];
+                this.addTag(s.type, s.value);
+            };
         });
     }
 
@@ -208,9 +281,15 @@ class PopupViewModel {
             this.updateState({
                 isRunning: res.running,
                 stats: res.stats,
-                selectedActions: res.currentAction || this.state.selectedActions,
                 isSupported: res.supported
+                // We prefer persisted state for actions/filters if not running
             });
+            if (res.running) {
+                this.updateState({
+                    selectedActions: res.currentAction,
+                    filters: res.filters
+                });
+            }
         });
     }
 
@@ -232,22 +311,30 @@ class PopupViewModel {
         }
     }
 
-    updateSelectedActions() {
+    async updateSelectedActions() {
         this.state.selectedActions = Array.from(this.elements.actionInputs)
             .filter(i => i.checked)
             .map(i => i.value);
-        this.syncConfigWithContent();
+        await this.persistAndSync();
     }
 
-    async syncConfigWithContent() {
+    async persistAndSync() {
+        // Save to storage
+        await chrome.storage.local.set({
+            filters: this.state.filters,
+            selectedActions: this.state.selectedActions
+        });
+
+        // Sync with engine (always)
         const tab = await this.getActiveTab();
-        if (tab && this.state.isRunning) {
+        if (tab) {
             chrome.tabs.sendMessage(tab.id, { 
                 type: "UPDATE_CONFIG", 
                 actions: this.state.selectedActions,
                 filters: this.state.filters
             });
         }
+        this.render();
     }
 
     handleRuntimeMessages(msg) {
@@ -274,7 +361,7 @@ class PopupViewModel {
     }
 
     render() {
-        const { isRunning, stats, statusMessage, selectedActions, filters } = this.state;
+        const { isRunning, stats, statusMessage, selectedActions, filters, isDropdownOpen } = this.state;
 
         if (isRunning) {
             this.elements.btnLabel.style.display = "none";
@@ -283,30 +370,64 @@ class PopupViewModel {
             this.elements.btnPlay.classList.add("is-running");
         } else {
             this.elements.btnLabel.style.display = "block";
-            this.elements.btnLabel.textContent = "INITIATE";
             this.elements.btnCount.style.display = "none";
             this.elements.btnPlay.classList.remove("is-running");
         }
 
         this.elements.statusLabel.textContent = statusMessage;
+        
+        // Render Custom Dropdown
+        const currentCond = this.conditions.find(c => c.id === filters.condition) || this.conditions[0];
+        this.elements.currentConditionText.textContent = currentCond.label;
+        this.elements.conditionMenu.style.display = isDropdownOpen ? 'block' : 'none';
+        
+        this.elements.conditionMenu.innerHTML = this.conditions.map(c => `
+            <div class="dropdown-item ${c.id === filters.condition ? 'active' : ''}" data-id="${c.id}">
+                <span>${c.label}</span>
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+        `).join('');
 
-        this.elements.modeBtns.forEach(btn => {
-            btn.classList.toggle("active", btn.dataset.mode === filters.mode);
+        this.elements.conditionMenu.querySelectorAll('.dropdown-item').forEach(item => {
+            item.onclick = async (e) => {
+                e.stopPropagation();
+                this.state.filters.condition = item.dataset.id;
+                this.state.isDropdownOpen = false;
+                await this.persistAndSync();
+            };
         });
+
+        const needsInput = !['IS_EMPTY', 'IS_NOT_EMPTY', 'NONE'].includes(filters.condition);
+        this.elements.filterInputGroup.classList.toggle('hidden', !needsInput);
+        this.elements.tagsDisplayWrapper.classList.toggle('hidden', !needsInput);
 
         const tagsJson = JSON.stringify(filters.tags);
         if (this.lastRenderedTags !== tagsJson) {
             this.elements.tagsDisplay.innerHTML = filters.tags.map((tag, i) => `
-                <div class="tag ${tag.type === 'user' ? 'tag-user' : 'tag-kw'}">
-                    <span>${tag.type === 'user' ? '@' : ''}${tag.value}</span>
+                <div class="tag ${tag.type === 'user' ? 'tag-user' : tag.type === 'hashtag' ? 'tag-hashtag' : 'tag-kw'}" data-type="${tag.type}" data-value="${tag.value}">
+                    <span>${tag.type === 'user' ? '@' : tag.type === 'hashtag' ? '#' : ''}${tag.value}</span>
                     <span class="tag-remove" data-index="${i}">&times;</span>
                 </div>
             `).join('');
 
-            this.elements.tagsDisplay.querySelectorAll('.tag-remove').forEach(btn => {
-                btn.onclick = (e) => {
-                    e.stopPropagation(); // Prevent drag event
-                    this.removeTag(btn.dataset.index);
+            this.elements.tagsDisplay.querySelectorAll('.tag').forEach(tagEl => {
+                const type = tagEl.dataset.type;
+                const value = tagEl.dataset.value;
+                const removeBtn = tagEl.querySelector('.tag-remove');
+
+                if (type === 'user' || type === 'hashtag') {
+                    tagEl.onclick = (e) => {
+                        if (e.target === removeBtn) return;
+                        const url = type === 'user' 
+                            ? `https://www.instagram.com/${value}/`
+                            : `https://www.instagram.com/explore/tags/${value}/`;
+                        window.open(url, '_blank');
+                    };
+                }
+
+                removeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    this.removeTag(removeBtn.dataset.index);
                 };
             });
             this.lastRenderedTags = tagsJson;
