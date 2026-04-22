@@ -10,7 +10,7 @@
 ---
 
 ## 💎 Why Doomscroll Bot?
-Let's face it: we've all had those "cringe" moments in our digital past. Whether it's a post you liked three years ago or a repost that no longer fits your vibe, **Doomscroll Bot** helps you clean up your footprint without the manual grind. It doesn’t just "clean"; it redacts your trace using the **Humanly Active Engine**.
+Let's face it: we've all had those moments in our digital past that no longer represent who we are today. **Doomscroll Bot** helps you clean up your footprint without the manual grind. It doesn’t just "clean"; it redacts your trace using the **Human-Mimic Engine**.
 
 ## 🚀 Core Features
 
@@ -23,14 +23,16 @@ Built to be indistinguishable from a real user.
 ### 2. **Multi-Action Protocol** ⚡
 Select multiple activities (Like, Repost, Save) and the bot will process them all in a single pass for each post. Efficient, fast, and silent.
 
-### 3. **Auto-Discovery Mode** 🔍
-No limits required. The bot scans your feed dynamically, discovering old traces and clearing them until the very end of your history.
+### 3. **Strategic Scoping** 🎯
+Currently optimized for the most critical curation battlegrounds:
+- **Explore:** Clear your footprints as you discover.
+- **Profile:** Manage interactions directly from any user grid.
+- **Saved:** Refine your personal collections with ease.
 
 ### 4. **Premium Live Dashboard** 📊
 A minimalist "Glassmorphism" UI that talks to you.
-- **Humanly Reporting:** Real-time updates like *"Analyzing @user's trace"* or *"Redacting interaction..."*
-- **Aura Animation:** A living "Start" engine with rhythmic light pulses that signal active operation.
-- **Dark Mode Native:** Designed to look stunning in both light and dark environments.
+- **Humanly Reporting:** Real-time updates like *"Analyzing @user's trace"* or *"History rewritten..."*
+- **Aura Animation:** A living master engine that pulses with life during operation.
 
 ---
 
@@ -46,29 +48,29 @@ A minimalist "Glassmorphism" UI that talks to you.
 
 ## 📖 How to Use
 
-1. **Target:** Open Instagram and navigate to **"Your Activity"** (or your Profile/Specific Feed).
+1. **Target:** Open Instagram and navigate to **Explore**, a **Profile**, or your **Saved** items.
 2. **Select:** Open the Doomscroll Bot popup and check the activities you wish to redact.
 3. **Initiate:** Press the large **START** circle in the center.
-4. **Observe:** Watch as the engine rewrites your history.
+4. **Observe:** Watch as the history vanishes. The engine will automatically stop at the end of the feed.
 
 ---
 
 ## 🛡 Privacy & Safety
 Doomscroll Bot operates entirely within your browser (Content Script). 
 - **No Data Collection:** Your data never leaves your machine.
-- **Safety First:** The human-like delays are specifically tuned to respect platform rate limits and avoid detection.
-- **Your Terms:** You are always in control of what is redacted.
+- **Safety First:** Human-like pacing is strictly enforced to protect your account.
+- **Your Terms:** You are always in control of the redaction process.
 
 ---
 
 ## 📜 Disclaimer
-This project is for educational and personal curation purposes only. It is an open-source tool built to help users manage their own data. Use responsibly.
+This project is for educational and personal curation purposes only. Use responsibly.
 
 ---
 
 ## 👨‍💻 Author
 Built with passion by **[privatewasant](https://github.com/publicwasant/doomscroll-bot)**.
-*"Rewriting history, one post at a time."*
+*"Rewriting history, one post at a time. The potential is limitless."*
 
 ---
 **GitHub Open Source** | **IG Doomscroll Bot v1.1.0**
