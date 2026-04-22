@@ -1,11 +1,9 @@
 /**
- * Thread 2: Observer
- * Responsibility: Real-time DOM Scanning & Post Discovery
+ * IGObserver - Instagram Specific Scanner
  */
-class Observer {
+class IGObserver extends BaseObserver {
     constructor(dataCenter, instructor) {
-        this.dataCenter = dataCenter;
-        this.instructor = instructor;
+        super(dataCenter, instructor);
         this.discoverySet = new Set();
         this.selectors = {
             tiles: 'a[href*="/p/"], a[href*="/reel/"]',
@@ -24,7 +22,7 @@ class Observer {
             }
         });
         observer.observe(document.body, { childList: true, subtree: true });
-        console.log("[Observer] Active");
+        console.log("[IGObserver] Active");
     }
 
     scan(root) {
@@ -33,13 +31,11 @@ class Observer {
             const href = tile.getAttribute('href');
             if (!href || this.discoverySet.has(href)) return;
 
-            // Step 1: Basic extraction (Shell Discovery)
             let user = "";
             const container = tile.closest('article') || tile.parentElement;
             const userLink = container.querySelector(this.selectors.postOwner);
             if (userLink) user = userLink.getAttribute('href').split('/').filter(p => p)[0];
 
-            // If profile page
             const pathParts = window.location.pathname.split('/').filter(p => p);
             if (pathParts.length === 1 && !['explore', 'reels'].includes(pathParts[0])) user = pathParts[0];
 
@@ -62,7 +58,6 @@ class Observer {
         const user = userLink ? userLink.getAttribute('href').split('/').filter(p => p)[0] : "someone";
         const caption = capEl ? capEl.innerText.trim() : "";
 
-        // Update Data Center with full info
         return this.dataCenter.updatePost(href, { user, caption, status: 'completed' });
     }
 }
