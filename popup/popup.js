@@ -1,5 +1,5 @@
 /**
- * Professional MVVM Implementation for Popup v1.2.1
+ * Professional MVVM Implementation for Popup v1.3.0
  */
 
 class PopupViewModel {
@@ -23,7 +23,7 @@ class PopupViewModel {
                 tags: [], 
                 condition: 'NONE'
             },
-            version: chrome.runtime.getManifest().version,
+            version: "",
             suggestions: [],
             selectedSuggestIdx: -1,
             isDropdownOpen: false
@@ -35,6 +35,7 @@ class PopupViewModel {
             btnLabel: document.getElementById("btnLabel"),
             statusLabel: document.getElementById("statusLabel"),
             versionLabel: document.getElementById("versionLabel"),
+            versionContainer: document.getElementById("versionContainer"),
             actionInputs: document.querySelectorAll('input[name="action"]'),
             filterInput: document.getElementById("filterInput"),
             filterInputGroup: document.getElementById("filterInputGroup"),
@@ -53,7 +54,16 @@ class PopupViewModel {
     }
 
     async init() {
-        if (this.elements.versionLabel) this.elements.versionLabel.textContent = this.state.version;
+        // Try to get version from manifest
+        try {
+            this.state.version = chrome.runtime.getManifest().version;
+            if (this.state.version && this.elements.versionLabel) {
+                this.elements.versionLabel.textContent = this.state.version;
+                this.elements.versionContainer.style.display = 'block';
+            }
+        } catch (e) {
+            console.warn("Could not retrieve version from manifest");
+        }
 
         // Load persisted state from storage
         const saved = await chrome.storage.local.get(["filters", "selectedActions"]);
@@ -66,6 +76,7 @@ class PopupViewModel {
             input.onchange = () => this.updateSelectedActions();
         });
 
+        // Custom Dropdown Event
         this.elements.conditionTrigger.onclick = (e) => {
             e.stopPropagation();
             this.state.isDropdownOpen = !this.state.isDropdownOpen;
@@ -282,7 +293,6 @@ class PopupViewModel {
                 isRunning: res.running,
                 stats: res.stats,
                 isSupported: res.supported
-                // We prefer persisted state for actions/filters if not running
             });
             if (res.running) {
                 this.updateState({
