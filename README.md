@@ -1,5 +1,5 @@
 # 🕵️‍♂️ Doomscroll Bot
-### *The Ultimate History Rewriter*
+### *Based DOM Automation*
 
 <p align="center">
   <img src="assets/screenshot-v1.1.0/Screenshot%202569-04-22%20at%2008.36.01.png" width="250">
@@ -12,25 +12,28 @@
 ## 💎 Why Doomscroll Bot?
 Let's face it: we've all had those moments in our digital past that no longer represent who we are today. **Doomscroll Bot** helps you clean up your footprint without the manual grind. It doesn’t just "clean"; it redacts your trace using the **Human-Mimic Engine**.
 
-## 🚀 Core Features (v1.2.0)
+## 🚀 Core Features (v1.3.0)
 
-### 1. **Advanced Surgical Filters** 🎯 *[NEW]*
-- **Targeted Redaction:** Use **ONLY MATCH** mode to action only posts that fit your filters.
-- **Whitelist System:** Use **EXCLUDE** mode to protect specific people or topics.
-- **IDE-Style Input:** Type `@` to see suggested usernames the bot has scanned, or type keywords to filter captions.
-- **Visual Tags:** Manage your filters with a clean, color-coded tag system.
+### 1. **Advanced Logic Filters** 🎯 *[ENHANCED]*
+- **Flexible Conditions:** Choose from `is`, `is not`, `contains`, `does not contain`, `is empty`, and `is not empty`.
+- **Hashtag Support:** Now supports `#hashtag` filtering with smart suggestions.
+- **IDE-Style Input:** Type `@` for usernames or `#` for hashtags to see suggestions the bot has learned.
+- **Persistent State:** Your filters and selected activities are automatically saved—ready whenever you open the app.
+- **Visual Links:** Click on `@username` or `#hashtag` tags to open them directly on Instagram.
 
 ### 2. **The Human-Mimic Engine** 🧠
 Built to be indistinguishable from a real user. 
 - **Smooth Traversal:** Uses natural scrolling with "eye-focus" pauses.
 - **Jittered Interaction:** Simulates physical touch by clicking random coordinates.
-- **Passive Scanning:** Learns usernames from your screen to provide smart suggestions.
+- **Passive Scanning:** Deep-scans both links and captions to provide intelligent `@` and `#` suggestions.
 
-### 3. **Multi-Action Protocol** ⚡
-Select multiple activities (Like, Repost, Save) and the bot will process them all in a single pass.
+### 3. **Protocol Controls** ⚡
+- **Multi-Action Pass:** Select multiple activities (Like, Repost, Save) to process in a single workflow.
+- **Factory Reset:** A dedicated button to instantly wipe all stats, filters, and learned data to start fresh.
 
-### 4. **Premium Live Dashboard** 📊
-A minimalist UI that provides real-time feedback on every decision the bot makes.
+### 4. **Premium IG-Themed UI** 🎨
+- **Integrated Design:** Custom dropdowns and icons that follow Instagram's official design language.
+- **Live Dashboard:** Real-time feedback and success counters.
 
 ---
 
@@ -48,16 +51,16 @@ A minimalist UI that provides real-time feedback on every decision the bot makes
 1. **Target:** Open Instagram and navigate to **Explore**, a **Profile**, or your **Saved** items.
 2. **Configure:** 
    - Choose your **Activities**.
-   - (Optional) Add **Filters**: Type `@username` for specific users or `keyword` for captions.
-   - Choose **Mode**: `EXCLUDE` (Whitelist) or `ONLY MATCH` (Targeted).
-3. **Initiate:** Press the **START** button.
+   - (Optional) Set a **Filter Condition** (e.g., `contains`).
+   - Add **Tags**: Type `@username`, `#hashtag`, or any `keyword`.
+3. **Initiate:** Press the **Play** icon to start the redaction protocol.
 
 ---
 
 ## 🛡 Privacy & Safety
 - **No Data Collection:** Your data never leaves your machine.
 - **Safety First:** Human-like pacing is strictly enforced.
-- **Local Storage:** Suggested usernames are stored locally on your browser.
+- **Local Storage:** All preferences and learned tags are stored locally on your browser.
 
 ---
 
@@ -66,4 +69,4 @@ Built with passion by **[privatewasant](https://github.com/publicwasant/doomscro
 *"Rewriting history, one post at a time."*
 
 ---
-**GitHub Open Source** | **IG Doomscroll Bot v1.2.0**
+**GitHub Open Source** | **IG Doomscroll Bot v1.3.0**
