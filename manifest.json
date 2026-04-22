@@ -1,8 +1,8 @@
 {
   "name": "Doomscroll Bot",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "manifest_version": 3,
-  "permissions": ["activeTab", "scripting", "tabs"],
+  "permissions": ["activeTab", "scripting", "tabs", "storage"],
   "host_permissions": [
     "*://*.instagram.com/*"
   ],

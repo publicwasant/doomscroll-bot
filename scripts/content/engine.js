@@ -1,18 +1,58 @@
 /**
- * Core Bot Engine
+ * Professional Core Bot Engine v1.2.1
  */
 
 const SELECTORS = {
     tiles: 'a[href*="/p/"], a[href*="/reel/"]',
-    closeBtn: 'svg[aria-label="Close"], svg[aria-label="ปิด"]'
+    closeBtn: 'svg[aria-label="Close"], svg[aria-label="ปิด"]',
+    article: 'article[role="presentation"], article',
+    postOwner: 'header a[href^="/"][role="link"]',
+    caption: 'div[dir="auto"]'
 };
 
 class DoomscrollEngine {
     constructor() {
         this.running = false;
         this.currentActions = [];
+        this.filters = {
+            tags: [], 
+            mode: 'EXCLUDE' 
+        };
         this.processedLinks = new Set();
+        this.observedUsers = new Set();
         this.stats = { done: 0, success: 0, posts: 0, reels: 0, fail: 0 };
+        
+        this.initObserver();
+    }
+
+    initObserver() {
+        const scan = () => {
+            const links = document.querySelectorAll('a[href^="/"]');
+            links.forEach(link => {
+                const path = link.getAttribute('href');
+                const parts = path.split('/').filter(p => p);
+                if (parts.length === 1) {
+                    const username = parts[0];
+                    const reserved = ['explore', 'reels', 'p', 'reel', 'stories', 'direct', 'accounts', 'emails', 'legal', 'privacy', 'explore', 'about', 'help', 'api', 'press', 'terms', 'directory'];
+                    if (!reserved.includes(username) && !username.includes('?')) {
+                        this.addObservedUser(username);
+                    }
+                }
+            });
+        };
+        setInterval(scan, 3000);
+        scan();
+    }
+
+    async addObservedUser(username) {
+        if (!this.observedUsers.has(username)) {
+            this.observedUsers.add(username);
+            const { observedList = [] } = await chrome.storage.local.get("observedList");
+            if (!observedList.includes(username)) {
+                const newList = [username, ...observedList].slice(0, 100); 
+                await chrome.storage.local.set({ observedList: newList });
+            }
+        }
     }
 
     async checkStatus() {
@@ -48,8 +88,7 @@ class DoomscrollEngine {
         };
 
         const labels = outlets[action] || [];
-        const article = document.querySelector('article[role="presentation"]') || document.querySelector('article');
-        const root = article || document;
+        const root = document.querySelector(SELECTORS.article) || document;
 
         if (action === 'LIKE' || action === 'REPOST') {
             const sections = root.querySelectorAll('section');
@@ -79,15 +118,37 @@ class DoomscrollEngine {
         return null;
     }
 
-    getOwnerName() {
-        const article = document.querySelector('article[role="presentation"]') || document.querySelector('article');
-        if (!article) return "someone";
-        const userLink = article.querySelector('a[href^="/"][role="link"]');
-        if (userLink) {
-            const name = userLink.getAttribute('href').replace(/\//g, '');
-            if (name && !['explore', 'reels'].includes(name)) return name;
+    getPostData() {
+        const article = document.querySelector(SELECTORS.article);
+        if (!article) return { owner: "someone", caption: "" };
+        
+        const userLink = article.querySelector(SELECTORS.postOwner);
+        const owner = userLink ? userLink.getAttribute('href').split('/').filter(p => p)[0] : "someone";
+        
+        const captionEl = article.querySelector(SELECTORS.caption);
+        const caption = captionEl ? captionEl.innerText : "";
+
+        return { owner, caption };
+    }
+
+    shouldProcessPost(data) {
+        if (this.filters.tags.length === 0) return true;
+
+        const hasKeywordMatch = this.filters.tags
+            .filter(t => t.type === 'keyword')
+            .some(t => data.caption.toLowerCase().includes(t.value.toLowerCase()));
+        
+        const hasUserMatch = this.filters.tags
+            .filter(t => t.type === 'user')
+            .some(t => t.value.toLowerCase() === data.owner.toLowerCase());
+
+        const isMatched = hasKeywordMatch || hasUserMatch;
+
+        if (this.filters.mode === 'ONLY_MATCH') {
+            return isMatched;
+        } else {
+            return !isMatched; 
         }
-        return "someone";
     }
 
     async processOne(href) {
@@ -104,14 +165,22 @@ class DoomscrollEngine {
         const type = isReel ? "reel" : "post";
 
         await humanScrollTo(tile, this.running);
-        const intros = ["Targeting history...", "Intercepting memory...", "Locating digital footprint...", "Rewriting this moment..."];
-        this.updateUI(intros[rand(0, intros.length - 1)]);
+        this.updateUI("Analyzing target...");
         
         await humanClick(tile, this.running);
-        await sleep(rand(1000, 1800));
+        await sleep(rand(1000, 1500));
 
-        const owner = this.getOwnerName();
-        const viewing = [`Analyzing @${owner}'s trace`, `Scanning @${owner}'s ${type}`, `Assessing @${owner}`, `Evaluating interaction with @${owner}`];
+        const postData = this.getPostData();
+        
+        if (!this.shouldProcessPost(postData)) {
+            this.updateUI(`Filtering: Skipping @${postData.owner}`);
+            await sleep(500);
+            await this.closePost();
+            this.processedLinks.add(href);
+            return true; 
+        }
+
+        const viewing = [`Targeting @${postData.owner}`, `Scanning @${postData.owner}'s ${type}`, `Evaluating interaction with @${postData.owner}`];
         this.updateUI(viewing[rand(0, viewing.length - 1)]);
 
         let anySuccess = false;
@@ -128,7 +197,7 @@ class DoomscrollEngine {
             if (btn && this.running) {
                 await humanClick(btn, this.running);
                 anySuccess = true;
-                const rewriteMsgs = [`Erased trace from @${owner}`, `Redacted interaction with @${owner}`, `Successfully cleared @${owner}`, `@${owner}'s history rewritten` ];
+                const rewriteMsgs = [`Erased trace from @${postData.owner}`, `Redacted interaction with @${postData.owner}`, `Successfully cleared @${postData.owner}`, `@${postData.owner}'s history rewritten` ];
                 this.updateUI(rewriteMsgs[rand(0, rewriteMsgs.length - 1)]);
                 await sleep(rand(400, 800));
             }
@@ -141,18 +210,22 @@ class DoomscrollEngine {
             this.stats.fail++;
         }
 
-        const close = document.querySelector(SELECTORS.closeBtn);
-        if (close) await humanClick(close, this.running);
-        else window.dispatchEvent(new KeyboardEvent('keydown', { 'key': 'Escape' }));
+        await this.closePost();
 
         this.stats.done++;
         this.processedLinks.add(href);
         this.updateUI();
 
-        await sleep(rand(1200, 2200));
+        await sleep(rand(1000, 1800));
     }
 
-    async start(actions) {
+    async closePost() {
+        const close = document.querySelector(SELECTORS.closeBtn);
+        if (close) await humanClick(close, this.running);
+        else window.dispatchEvent(new KeyboardEvent('keydown', { 'key': 'Escape' }));
+    }
+
+    async start(actions, filters) {
         if (this.running) return;
         if (!isSupportedPage()) {
             this.updateUI("Unsupported page. Navigate to Explore or Profile.");
@@ -161,6 +234,7 @@ class DoomscrollEngine {
 
         this.running = true;
         this.currentActions = actions;
+        this.filters = filters || this.filters;
         this.processedLinks.clear();
         this.stats = { done: 0, success: 0, posts: 0, reels: 0, fail: 0 };
         
@@ -199,10 +273,10 @@ class DoomscrollEngine {
         this.running = false;
     }
 
-    updateConfig(actions) {
+    updateConfig(actions, filters) {
         this.currentActions = actions || this.currentActions;
+        this.filters = filters || this.filters;
     }
 }
 
-// Export for main.js (In Extension context, global works or use modules)
 window.engine = new DoomscrollEngine();

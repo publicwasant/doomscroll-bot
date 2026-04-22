@@ -1,5 +1,5 @@
 /**
- * Main Content Script Entry Point
+ * Main Content Script Entry Point v1.2.0
  */
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -14,7 +14,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
     
     if (msg.type === "START") {
-        if (!window.engine.running) window.engine.start(msg.actions);
+        if (!window.engine.running) {
+            window.engine.start(msg.actions, msg.filters);
+        }
         sendResponse({ status: "ok" });
     }
     
@@ -24,7 +26,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
     
     if (msg.type === "UPDATE_CONFIG") {
-        window.engine.updateConfig(msg.actions);
+        window.engine.updateConfig(msg.actions, msg.filters);
         sendResponse({ status: "ok" });
     }
     

@@ -5,122 +5,209 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doomscroll Bot</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
         :root {
           --accent: #ff3040;
-          --accent-glow: rgba(255, 48, 64, 0.3);
-          --primary-gradient: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+          --accent-glow: rgba(255, 48, 64, 0.2);
+          --ig-gradient: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
           --bg: #ffffff;
-          --surface: #fcfcfc;
-          --text-main: #1a1a1b;
-          --text-sub: #8e8e93;
-          --border: #efeff4;
-          --shadow: rgba(0, 0, 0, 0.05);
-          --btn-bg: #f0f0f5;
+          --surface: #f7f7f8;
+          --surface-hover: #efeff0;
+          --text-main: #000000;
+          --text-sub: #65676b;
+          --border: #e4e6eb;
+          --tag-bg: #f2f2f3;
+          --tag-user: #0095f6;
+          --tag-kw: var(--text-main);
+          --radius-lg: 16px;
+          --radius-md: 12px;
+          --radius-sm: 8px;
+          --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+          --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
         }
 
         @media (prefers-color-scheme: dark) {
           :root {
             --bg: #000000;
-            --surface: #121212;
-            --card-bg: #1c1c1e;
+            --surface: #1c1c1e;
+            --surface-hover: #2c2c2e;
             --text-main: #ffffff;
-            --text-sub: #8e8e93;
-            --border: #2c2c2e;
-            --shadow: rgba(0, 0, 0, 0.5);
-            --btn-bg: #1c1c1e;
+            --text-sub: #a0a0a2;
+            --border: #3a3a3c;
+            --tag-bg: #2c2c2e;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.4);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.6);
           }
         }
 
-        * { box-sizing: border-box; }
+        * { 
+            box-sizing: border-box; 
+            -webkit-font-smoothing: antialiased;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+        }
         
+        *::-webkit-scrollbar {
+            display: none; /* Chrome/Safari/Opera */
+        }
+
         body {
-          margin: 0; padding: 16px 20px; width: 280px;
+          margin: 0; padding: 20px; width: 320px;
           font-family: 'Inter', -apple-system, sans-serif;
           background: var(--bg); color: var(--text-main);
           user-select: none;
-          display: flex; flex-direction: column; align-items: center;
-          overflow: hidden;
+          display: flex; flex-direction: column;
+          overflow-x: hidden;
         }
 
-        .header { text-align: center; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; width: 100%; }
-        .ig-logo { width: 18px; height: 18px; fill: url(#ig-grad); }
-        .logo-text { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: var(--text-main); }
-        .alias { position: absolute; bottom: -12px; font-size: 7px; font-weight: 800; color: var(--text-sub); opacity: 0.6; letter-spacing: 1.5px; }
-        
-        /* Version Style */
-        .version { position: absolute; top: -8px; right: -10px; font-size: 8px; font-weight: 600; color: var(--text-sub); opacity: 0.5; }
+        .header { 
+          display: flex; flex-direction: column; align-items: center; 
+          margin-bottom: 24px; position: relative; 
+        }
+        .header-top { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+        .ig-logo { width: 22px; height: 22px; fill: url(#ig-grad); }
+        .logo-text { font-size: 16px; font-weight: 800; letter-spacing: -0.5px; }
+        .alias { font-size: 8px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8; }
+        .version { position: absolute; top: -10px; right: -10px; font-size: 9px; font-weight: 600; color: var(--text-sub); opacity: 0.5; }
 
-        .mode-badge {
-            font-size: 8px; font-weight: 900; color: var(--accent); border: 1px solid var(--accent); padding: 2px 6px; border-radius: 4px;
-            margin-top: 14px; margin-bottom: 20px; letter-spacing: 0.5px; display: inline-block;
+        .section-label {
+            font-size: 11px; font-weight: 700; color: var(--text-sub); 
+            margin: 16px 0 10px 0; letter-spacing: 0.3px;
         }
 
-        .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; width: 100%; }
+        .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; }
         .action-item { position: relative; cursor: pointer; }
         .action-item input { position: absolute; opacity: 0; }
         .action-box {
           display: flex; flex-direction: column; align-items: center; justify-content: center;
-          height: 56px; border-radius: 14px; transition: 0.3s cubic-bezier(0.2, 1, 0.3, 1);
-          background: var(--surface); border: 1px solid var(--border);
+          height: 64px; border-radius: var(--radius-md); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          background: var(--surface); border: 1.5px solid transparent;
         }
-        .action-item input:checked + .action-box { border-color: var(--accent); background: var(--bg); box-shadow: 0 8px 20px var(--accent-glow); }
-        .action-item svg { width: 18px; height: 18px; fill: var(--text-sub); margin-bottom: 4px; transition: 0.3s; }
-        .action-item input:checked + .action-box svg { fill: #dc2743; }
-        .action-item span { font-size: 9px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; }
-        .action-item input:checked + .action-box span { color: var(--text-main); }
+        .action-item:hover .action-box { background: var(--surface-hover); }
+        .action-item input:checked + .action-box { 
+          background: var(--bg); 
+          border-color: var(--accent);
+          box-shadow: var(--shadow-sm);
+        }
+        .action-item svg { width: 20px; height: 20px; fill: var(--text-sub); margin-bottom: 6px; }
+        .action-item input:checked + .action-box svg { fill: var(--accent); transform: scale(1.1); }
+        .action-item span { font-size: 10px; font-weight: 600; color: var(--text-sub); }
 
-        .status-bar { 
-            display: flex; align-items: center; justify-content: center; 
-            margin-bottom: 16px; width: 100%; min-height: 32px; padding: 0 10px;
+        .filter-container { width: 100%; position: relative; }
+        
+        .segmented-control { 
+            display: flex; background: var(--surface); border-radius: 10px; 
+            padding: 3px; margin-bottom: 12px; border: 1px solid var(--border);
         }
-        #statusLabel { 
-            font-size: 11px; font-weight: 500; color: var(--text-sub); text-align: center; 
-            line-height: 1.4; transition: 0.3s;
+        .segment-btn { 
+            flex: 1; font-size: 10px; font-weight: 700; padding: 8px; border-radius: 7px; 
+            cursor: pointer; text-align: center; color: var(--text-sub); transition: 0.2s;
+        }
+        .segment-btn.active { 
+            background: var(--bg); color: var(--text-main); 
+            box-shadow: var(--shadow-sm);
         }
 
-        .controls { margin-bottom: 28px; position: relative; }
+        .input-group { position: relative; width: 100%; }
+        #filterInput {
+            width: 100%; background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-md); padding: 12px 16px; font-size: 13px; 
+            font-family: inherit; color: var(--text-main); outline: none; transition: 0.2s;
+        }
+        #filterInput:focus { border-color: var(--text-sub); background: var(--bg); }
+
+        .suggestions {
+            position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
+            background: var(--bg); border: 1px solid var(--border);
+            border-radius: var(--radius-md); margin-top: 8px; max-height: 160px; 
+            overflow-y: auto; box-shadow: var(--shadow-md); display: none;
+        }
+        .suggestion-item { 
+            padding: 12px 16px; font-size: 13px; cursor: pointer; 
+            border-bottom: 1px solid var(--border); transition: 0.2s;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .suggestion-item:last-child { border-bottom: none; }
+        .suggestion-item:hover, .suggestion-item.selected { background: var(--surface); }
+        .suggestion-item b { color: var(--tag-user); }
+
+        .tags-display-wrapper {
+            position: relative; margin-top: 10px; width: 100%;
+            overflow: hidden;
+        }
+        .tags-display-wrapper::after {
+            content: ''; position: absolute; right: 0; top: 0; bottom: 0;
+            width: 40px; pointer-events: none;
+            background: linear-gradient(to right, transparent, var(--bg));
+        }
+        .tags-display { 
+            display: flex; gap: 6px; padding: 8px 0;
+            overflow-x: auto; white-space: nowrap;
+            user-select: none;
+            cursor: grab;
+        }
+        .tags-display:active { cursor: grabbing; }
+
+        .tag {
+            flex-shrink: 0;
+            display: inline-flex; align-items: center; gap: 4px; padding: 3px 6px; 
+            border-radius: 4px; font-size: 9px; font-weight: 600; 
+            background: var(--tag-bg); color: var(--text-main);
+            border: 1px solid var(--border);
+            transition: 0.2s;
+        }
+        .tag.tag-user { color: var(--tag-user); border-color: rgba(0, 149, 246, 0.2); background: transparent; }
+        .tag.tag-kw { 
+            color: var(--text-main); 
+            background: var(--tag-bg); 
+            border-color: var(--border); 
+        }
+        
+        .tag-remove { cursor: pointer; opacity: 0.4; font-size: 12px; margin-left: 1px; }
+        .tag-remove:hover { opacity: 1; }
+
+        .bot-center { 
+          display: flex; flex-direction: column; align-items: center; 
+          margin: 24px 0 32px 0;
+        }
+        .status-container { margin-bottom: 16px; height: 36px; display: flex; align-items: center; justify-content: center; width: 100%; }
+        #statusLabel { font-size: 13px; font-weight: 500; color: var(--text-sub); text-align: center; }
+
         .btn-main {
-          border: 3px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center;
-          transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); outline: none;
-          width: 88px; height: 88px; border-radius: 50%;
-          background: var(--btn-bg); color: var(--text-main);
-          box-shadow: 0 10px 25px var(--shadow);
-          position: relative; z-index: 2;
+          border: 4px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center;
+          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); outline: none;
+          width: 90px; height: 90px; border-radius: 50%;
+          background: var(--surface); color: var(--text-main);
+          box-shadow: var(--shadow-md); position: relative;
         }
-        
-        @keyframes pulse-aura {
-            0% { transform: scale(1); opacity: 0.7; }
-            100% { transform: scale(1.6); opacity: 0; }
-        }
-        .btn-main::before {
+        .btn-main:hover { transform: scale(1.04); }
+        .btn-main.is-running { background: var(--accent); color: white; border-color: rgba(255,255,255,0.2); }
+        .btn-main.is-running::after {
             content: ''; position: absolute; width: 100%; height: 100%;
-            background: inherit; border-radius: 50%; z-index: -1;
-            transition: 0.5s;
+            border-radius: 50%; border: 2px solid var(--accent);
+            animation: ripple 2s infinite;
         }
-        .btn-main.is-running::before { background: var(--accent); animation: pulse-aura 2s infinite ease-out; }
+        @keyframes ripple { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.6); opacity: 0; } }
 
-        .btn-main:hover { transform: scale(1.05); border-color: var(--text-sub); }
-        .btn-main.is-running { background: var(--accent); color: white; border-color: rgba(255,255,255,0.3); box-shadow: 0 15px 35px var(--accent-glow); }
-        
-        #btnCount { font-size: 42px; font-weight: 800; line-height: 1; letter-spacing: -2px; }
-        #btnLabel { font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        #btnCount { font-size: 40px; font-weight: 800; letter-spacing: -2px; }
+        #btnLabel { font-size: 15px; font-weight: 800; letter-spacing: 1px; }
 
-        #instructions {
-            width: 100%; background: var(--surface); border-radius: 12px; padding: 12px;
-            margin-bottom: 12px; border: 1px solid var(--border); font-size: 9.5px; line-height: 1.4; color: var(--text-sub);
-            position: relative;
-            display: flex; gap: 10px; align-items: flex-start;
+        .hint-box {
+            background: var(--surface); border-radius: var(--radius-md); padding: 12px;
+            margin-bottom: 20px; border: 1px solid var(--border); font-size: 11px; 
+            line-height: 1.4; color: var(--text-sub); display: flex; gap: 10px;
         }
-        .instr-icon { flex-shrink: 0; margin-top: 2px; color: var(--text-sub); opacity: 0.7; }
-        .instr-body { text-align: left; }
-        .instr-body b { color: inherit; filter: brightness(1.1); font-weight: 800; }
 
-        .footer { width: 100%; padding-top: 15px; border-top: 1px solid var(--border); display: flex; justify-content: center; }
-        .github-link { display: flex; align-items: center; gap: 8px; text-decoration: none; font-size: 10px; font-weight: 800; color: var(--text-sub); transition: 0.3s; }
-        .github-link:hover { color: var(--text-main); }
-        .github-link svg { width: 14px; height: 14px; fill: currentColor; }
+        .footer { 
+          padding-top: 16px; border-top: 1px solid var(--border); 
+          display: flex; justify-content: center; 
+        }
+        .github-link { 
+          display: flex; align-items: center; gap: 8px; text-decoration: none; 
+          font-size: 11px; font-weight: 700; color: var(--text-sub); transition: 0.2s; 
+        }
+        .github-link svg { width: 16px; height: 16px; fill: currentColor; }
     </style>
 </head>
 <body>
@@ -136,14 +223,15 @@
 </svg>
 
 <div class="header">
-    <svg class="ig-logo" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.85.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.161-1.666 4.703-4.919 4.85-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.85-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.161 1.665-4.704 4.919-4.85 1.265-.058 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.791-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.209-1.791 4-4 4zm6.406-11.845c.796 0 1.441.645 1.441 1.44s-.645 1.44-1.441 1.44c-.795 0-1.44-.645-1.44-1.44s.645-1.44 1.44-1.44z"/></svg>
-    <span class="logo-text">Doomscroll Bot</span>
-    <span class="alias">THE ULTIMATE HISTORY REWRITER</span>
-    <span class="version">v<span id="versionLabel">0.0.0</span></span>
+    <div class="header-top">
+        <svg class="ig-logo" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.85.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.161-1.666 4.703-4.919 4.85-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.85-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.161 1.665-4.704 4.919-4.85 1.265-.058 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.791-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.209-1.791 4-4 4zm6.406-11.845c.796 0 1.441.645 1.441 1.44s-.645 1.44-1.441 1.44c-.795 0-1.44-.645-1.44-1.44s.645-1.44 1.44-1.44z"/></svg>
+        <span class="logo-text">Doomscroll Bot</span>
+    </div>
+    <span class="alias">The History Redactor</span>
+    <span class="version">v<span id="versionLabel">1.2.1</span></span>
 </div>
 
-<span class="mode-badge">CHOOSE ACTIVITIES</span>
-
+<div class="section-label">Activities</div>
 <div class="action-grid">
     <label class="action-item">
         <input type="checkbox" name="action" value="LIKE" checked>
@@ -168,30 +256,42 @@
     </label>
 </div>
 
-<div class="status-bar">
-    <span id="statusLabel">System Idle</span>
+<div class="section-label">Redaction Filters</div>
+<div class="filter-container">
+    <div class="segmented-control">
+        <div class="segment-btn active" data-mode="EXCLUDE">EXCLUDE</div>
+        <div class="segment-btn" data-mode="ONLY_MATCH">ONLY MATCH</div>
+    </div>
+    
+    <div class="input-group">
+        <input type="text" id="filterInput" placeholder="Keyword or @username" autocomplete="off">
+        <div id="suggestionBox" class="suggestions"></div>
+    </div>
+
+    <div class="tags-display-wrapper">
+        <div id="tagsDisplay" class="tags-display"></div>
+    </div>
 </div>
 
-<div class="controls">
+<div class="bot-center">
+    <div class="status-container">
+        <span id="statusLabel">System Standby</span>
+    </div>
+    
     <button id="btnPlay" class="btn-main">
-        <span id="btnLabel">START</span>
+        <span id="btnLabel">INITIATE</span>
         <span id="btnCount" style="display:none">0</span>
     </button>
 </div>
 
-<div id="instructions">
-    <div class="instr-icon">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6m-6 3h6M12 2a7 7 0 0 0-7 7c0 2.45 1.5 4.34 3 5.5V18h8v-3.5c1.5-1.16 3-3.05 3-5.5a7 7 0 0 0-7-7z"></path></svg>
-    </div>
-    <div class="instr-body">
-        <b>MISSION:</b> Refine your digital history on your own terms. Human-like pacing is enforced for account safety.
-    </div>
+<div class="hint-box">
+    <div><b>Tip:</b> Targeted redaction uses <b>Only Match</b> mode to process specific items.</div>
 </div>
 
 <div class="footer">
     <a href="https://github.com/publicwasant/doomscroll-bot" target="_blank" class="github-link">
         <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.419 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z"/></svg>
-        <span>GitHub Open Source</span>
+        <span>GitHub Repository</span>
     </a>
 </div>
 
