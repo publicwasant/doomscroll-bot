@@ -25,6 +25,11 @@ async function syncState() {
     });
     
     updateStatsUI(res.stats);
+    
+    // Check if on supported page
+    if (!res.supported && !isRunning) {
+        statusLabel.textContent = "Please navigate to 'Your Activity' to start.";
+    }
   });
 }
 
@@ -86,7 +91,6 @@ btnPlay.onclick = async () => {
   if (!tab) return;
 
   if (!isRunning) {
-    // START
     const actions = getSelectedActions();
     if (actions.length === 0) {
         statusLabel.textContent = "Please select at least one activity.";
@@ -96,7 +100,7 @@ btnPlay.onclick = async () => {
     btnCount.textContent = "0";
     statusLabel.textContent = "Initiating redaction protocol...";
     
-    chrome.tabs.sendMessage(tab.id, { type: "START", actions, limit: 9999 }, (res) => {
+    chrome.tabs.sendMessage(tab.id, { type: "START", actions }, (res) => {
       if (chrome.runtime.lastError) {
         statusLabel.textContent = "Please refresh Instagram to sync.";
         resetUI();
@@ -108,9 +112,6 @@ btnPlay.onclick = async () => {
   } else {
     // STOP
     chrome.tabs.sendMessage(tab.id, { type: "STOP" }, (res) => {
-        if (res && res.summary) {
-            statusLabel.textContent = res.summary;
-        }
         resetUI();
     });
   }
@@ -118,7 +119,12 @@ btnPlay.onclick = async () => {
 
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.type === "STATS_UPDATE") {
-    updateStatsUI(msg.stats, msg.msg);
+    // ถ้าบอทส่งมาว่าไม่รองรับหน้า และยังรันไม่สำเร็จ ให้ขึ้นเตือน
+    if (!msg.supported && !isRunning) {
+        statusLabel.textContent = "Mission denied. Go to 'Your Activity' page.";
+    } else {
+        updateStatsUI(msg.stats, msg.msg);
+    }
   }
   if (msg.type === "WORKFLOW_COMPLETE") {
     resetUI();

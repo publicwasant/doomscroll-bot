@@ -12,8 +12,24 @@ let processedLinks = new Set();
 let stats = { done: 0, success: 0, posts: 0, reels: 0, fail: 0 };
 
 /**
- * Check if the bot should continue. Throws error to break all loops if stopped.
+ * ตรวจสอบหน้าเว็บที่รองรับ: Explore, Profile, Saved
  */
+function isSupportedPage() {
+    const path = window.location.pathname;
+    
+    const isHome = path === '/' || path === '';
+    const isExplore = path.startsWith('/explore');
+    const isSaved = path.includes('/saved/');
+    
+    // ตรวจสอบว่าเป็น Profile หรือไม่ (ไม่ใช่หน้าพิเศษอื่นๆ)
+    const reservedPaths = ['/reels/', '/direct/', '/accounts/', '/emails/', '/legal/', '/privacy/'];
+    const isReserved = reservedPaths.some(p => path.startsWith(p));
+    const isProfile = !isHome && !isExplore && !isReserved;
+
+    // รองรับเฉพาะ Explore, Profile, และ Saved
+    return isExplore || isProfile || isSaved;
+}
+
 async function checkStatus() {
     if (!running) throw new Error("BOT_STOPPED");
 }
@@ -23,7 +39,8 @@ function updateUI(customMsg = "") {
         type: "STATS_UPDATE",
         stats,
         msg: customMsg,
-        running
+        running,
+        supported: isSupportedPage()
     });
 }
 
@@ -41,7 +58,7 @@ function getSummary() {
 // -------------------- 🖱 Humanized Interactions --------------------
 
 async function humanClick(el) {
-    if (!el) return;
+    if (!el || !running) return;
     await checkStatus();
     const rect = el.getBoundingClientRect();
     const x = rect.left + rect.width * (0.3 + Math.random() * 0.4);
@@ -55,7 +72,7 @@ async function humanClick(el) {
 }
 
 async function humanScrollTo(el) {
-    if (!el) return;
+    if (!el || !running) return;
     await checkStatus();
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     await sleep(rand(600, 900));
@@ -128,19 +145,21 @@ async function processOne(href) {
     const type = isReel ? "reel" : "post";
 
     await humanScrollTo(tile);
-    updateUI(`Intercepting memory...`);
+    const intros = ["Targeting history...", "Intercepting memory...", "Locating digital footprint...", "Rewriting this moment..."];
+    updateUI(intros[rand(0, intros.length - 1)]);
     
     await humanClick(tile);
     await sleep(rand(1000, 1800));
 
     const owner = getOwnerName();
-    updateUI(`Analyzing @${owner}'s trace`);
+    const viewing = [`Analyzing @${owner}'s trace`, `Scanning @${owner}'s ${type}`, `Assessing @${owner}`, `Evaluating interaction with @${owner}`];
+    updateUI(viewing[rand(0, viewing.length - 1)]);
 
     let anySuccess = false;
     for (const action of currentActions) {
         await checkStatus();
         let btn = null;
-        for (let i = 0; i < 15; i++) {
+        for (let i = 0; i < 10; i++) {
             await checkStatus();
             btn = findActionButton(action);
             if (btn) break;
@@ -150,7 +169,8 @@ async function processOne(href) {
         if (btn && running) {
             await humanClick(btn);
             anySuccess = true;
-            updateUI(`Redacted interaction with @${owner}`);
+            const rewriteMsgs = [`Erased trace from @${owner}`, `Redacted interaction with @${owner}`, `Successfully cleared @${owner}`, `@${owner}'s history rewritten` ];
+            updateUI(rewriteMsgs[rand(0, rewriteMsgs.length - 1)]);
             await sleep(rand(400, 800));
         }
     }
@@ -175,6 +195,11 @@ async function processOne(href) {
 
 async function startWorkflow(actions) {
     if (running) return;
+    if (!isSupportedPage()) {
+        updateUI("Unsupported page. Navigate to Explore or Profile.");
+        return;
+    }
+
     running = true;
     currentActions = actions;
     processedLinks.clear();
@@ -206,7 +231,6 @@ async function startWorkflow(actions) {
     } catch (e) {
         console.log("Doomscroll Bot stopped.");
     } finally {
-        const wasRunning = running;
         running = false;
         chrome.runtime.sendMessage({ type: "WORKFLOW_COMPLETE", summary: getSummary() });
     }
@@ -215,7 +239,7 @@ async function startWorkflow(actions) {
 // -------------------- 🛑 Listeners --------------------
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === "GET_STATE") {
-        sendResponse({ running, stats, currentAction: currentActions });
+        sendResponse({ running, stats, currentAction: currentActions, supported: isSupportedPage() });
         return;
     }
     if (msg.type === "START") {
@@ -224,7 +248,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
     if (msg.type === "STOP") {
         running = false;
-        sendResponse({ status: "ok", summary: getSummary() });
+        sendResponse({ status: "ok" });
     }
     if (msg.type === "UPDATE_CONFIG") {
         currentActions = msg.actions || currentActions;
