@@ -1,345 +1,121 @@
 /**
- * Professional Core Bot Engine v1.2.1
+ * Doomscroll Bot Orchestrator v1.7.6
+ * Bridges DataCenter, Observer, and Instructor
  */
-
-const SELECTORS = {
-    tiles: 'a[href*="/p/"], a[href*="/reel/"]',
-    closeBtn: 'svg[aria-label="Close"], svg[aria-label="ปิด"]',
-    article: 'article[role="presentation"], article',
-    postOwner: 'header a[href^="/"][role="link"]',
-    caption: 'div[dir="auto"]'
-};
-
 class DoomscrollEngine {
     constructor() {
-        this.resetInternalState();
-        this.initObserver();
+        this.dataCenter = new DataCenter();
+        this.instructor = new Instructor(this.dataCenter);
+        this.observer = new Observer(this.dataCenter, this.instructor);
+        
+        // Circular dependency handling
+        this.instructor.setObserver(this.observer);
+
+        this.init();
     }
 
-    resetInternalState() {
-        this.running = false;
-        this.currentActions = ["LIKE"];
-        this.filters = {
-            tags: [], 
-            condition: 'NONE' 
-        };
-        this.processedLinks = new Set();
-        this.observedUsers = new Set();
-        this.observedHashtags = new Set();
-        this.stats = { done: 0, success: 0, posts: 0, reels: 0, fail: 0 };
+    async init() {
+        await this.dataCenter.load();
+        this.initGlobalAPI();
+        this.injectBridge();
+        this.observer.start();
     }
 
-    initObserver() {
-        const scan = async () => {
-            // Observe Users from links
-            const links = document.querySelectorAll('a[href^="/"]');
-            links.forEach(link => {
-                const path = link.getAttribute('href');
-                const parts = path.split('/').filter(p => p);
-                if (parts.length === 1) {
-                    const username = parts[0];
-                    const reserved = ['explore', 'reels', 'p', 'reel', 'stories', 'direct', 'accounts', 'emails', 'legal', 'privacy', 'explore', 'about', 'help', 'api', 'press', 'terms', 'directory'];
-                    if (!reserved.includes(username) && !username.includes('?')) {
-                        this.addObservedUser(username);
+    injectBridge() {
+        const s = document.createElement('script');
+        s.src = chrome.runtime.getURL('scripts/content/bridge.js');
+        (document.head || document.documentElement).appendChild(s);
+        s.onload = () => s.remove();
+    }
+
+    initGlobalAPI() {
+        window.doomAPI = {
+            posts: () => Array.from(this.dataCenter.posts.values()),
+            users: async () => (await chrome.storage.local.get(['all_user'])).all_user || [],
+            hashtag: async () => (await chrome.storage.local.get(['all_hashtag'])).all_hashtag || [],
+            queue: () => this.instructor.queue,
+            state: () => ({ 
+                running: this.instructor.running, 
+                stats: this.instructor.stats, 
+                queue_size: this.instructor.queue.length 
+            }),
+            target: () => this.instructor.currentTarget,
+            start: (a, f) => this.instructor.start(a, f),
+            stop: () => this.instructor.stop(),
+            
+            // --- Ultimate Export API ---
+            export: async () => {
+                const storageData = await chrome.storage.local.get(null);
+                const snapshot = {
+                    metadata: {
+                        project: "Doomscroll Bot",
+                        version: chrome.runtime.getManifest().version,
+                        export_time: new Date().toISOString(),
+                        local_time: new Date().toLocaleString(),
+                        url: window.location.href
+                    },
+                    threads: {
+                        data_center: {
+                            total_posts: this.dataCenter.posts.size,
+                            all_user: storageData.all_user || [],
+                            all_hashtag: storageData.all_hashtag || [],
+                            all_posts: Array.from(this.dataCenter.posts.values())
+                        },
+                        instructor: {
+                            running: this.instructor.running,
+                            stats: this.instructor.stats,
+                            queue: this.instructor.queue,
+                            current_target: this.instructor.currentTarget
+                        },
+                        observer: {
+                            discovery_count: this.observer.discoverySet.size,
+                            current_discovery_set: Array.from(this.observer.discoverySet)
+                        }
+                    },
+                    system: {
+                        error_stack: this.dataCenter.errorStack,
+                        storage_raw: storageData
                     }
-                }
-            });
+                };
 
-            // Observe Hashtags from links (e.g., /explore/tags/travel/)
-            const hashtagLinks = document.querySelectorAll('a[href*="/explore/tags/"]');
-            hashtagLinks.forEach(link => {
-                const href = link.getAttribute('href');
-                const match = href.match(/\/explore\/tags\/([^/?#]+)/);
-                if (match && match[1]) {
-                    this.addObservedHashtag(decodeURIComponent(match[1]));
-                }
-            });
-
-            // Fallback: Observe Hashtags from visible text content (Improved Regex)
-            const captions = document.querySelectorAll(SELECTORS.caption);
-            captions.forEach(el => {
-                const text = el.innerText;
-                // Match # followed by word characters or Thai characters
-                const hashtagRegex = /#([a-zA-Z0-9_ก-๙]+)/g; 
-                let match;
-                while ((match = hashtagRegex.exec(text)) !== null) {
-                    this.addObservedHashtag(match[1]);
-                }
-            });
+                const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `doom-full-snapshot-${Date.now()}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                return "Full System Snapshot exported successfully.";
+            },
+            
+            wipe: async () => {
+                await this.dataCenter.wipe();
+                location.reload();
+            }
         };
-        setInterval(scan, 3000);
-        scan();
-    }
 
-    async addObservedUser(username) {
-        if (!this.observedUsers.has(username)) {
-            this.observedUsers.add(username);
-            const { observedList = [] } = await chrome.storage.local.get("observedList");
-            if (!observedList.includes(username)) {
-                const newList = [username, ...observedList].slice(0, 100); 
-                await chrome.storage.local.set({ observedList: newList });
-            }
-        }
-    }
-
-    async addObservedHashtag(tag) {
-        const lowerTag = tag.toLowerCase();
-        if (!this.observedHashtags.has(lowerTag)) {
-            this.observedHashtags.add(lowerTag);
-            const { hashtagList = [] } = await chrome.storage.local.get("hashtagList");
-            if (!hashtagList.includes(lowerTag)) {
-                const newList = [lowerTag, ...hashtagList].slice(0, 100);
-                await chrome.storage.local.set({ hashtagList: newList });
-                console.log("Found Hashtag:", lowerTag); // For Debugging
-            }
-        }
-    }
-
-    async checkStatus() {
-        if (!this.running) throw new Error("BOT_STOPPED");
-    }
-
-    updateUI(customMsg = "") {
-        chrome.runtime.sendMessage({
-            type: "STATS_UPDATE",
-            stats: this.stats,
-            msg: customMsg,
-            running: this.running,
-            supported: isSupportedPage(),
-            filters: this.filters
+        window.addEventListener("message", async (e) => {
+            if (e.data.type !== "DOOM_API_REQUEST") return;
+            const method = e.data.method;
+            const params = e.data.params;
+            const result = await window.doomAPI[method]?.(params);
+            if (result) console.log(`%c[Doom API: ${method.toUpperCase()}]`, "color: #0095f6; font-weight: bold;", result);
         });
     }
 
-    getSummary() {
-        let summary = "Mission complete. History rewritten.";
-        if (this.stats.success > 0) {
-            const details = [];
-            if (this.stats.posts > 0) details.push(`${this.stats.posts} posts`);
-            if (this.stats.reels > 0) details.push(`${this.stats.reels} reels`);
-            summary = `History rewritten. ${details.join(' and ')} redacted.`;
-        }
-        return summary;
-    }
-
-    findActionButton(action) {
-        const outlets = {
-            LIKE: ["Like", "Unlike", "ถูกใจ", "เลิกถูกใจ"],
-            REPOST: ["Repost", "Unrepost", "รีโพสต์", "เลิกโพสต์ใหม่"],
-            SAVE: ["Save", "Remove", "บันทึก", "เลิกบันทึก", "Unsave"]
-        };
-
-        const labels = outlets[action] || [];
-        const root = document.querySelector(SELECTORS.article) || document;
-
-        if (action === 'LIKE' || action === 'REPOST') {
-            const sections = root.querySelectorAll('section');
-            for (const section of sections) {
-                const hasLike = section.querySelector('svg[aria-label="Like"], svg[aria-label="Unlike"], svg[aria-label="ถูกใจ"], svg[aria-label="เลิกถูกใจ"]');
-                if (!hasLike) continue;
-
-                const btns = Array.from(section.querySelectorAll('[role="button"]'));
-                for (const btn of btns) {
-                    const svg = btn.querySelector('svg[aria-label]');
-                    if (svg && labels.includes(svg.getAttribute('aria-label'))) {
-                        if (!btn.closest('ul') && !btn.closest('li')) return btn;
-                    }
-                }
-            }
-        }
-
-        if (action === 'SAVE') {
-            for (const label of labels) {
-                const svg = root.querySelector(`svg[aria-label="${label}"]`);
-                if (svg) {
-                    const btn = svg.closest('[role="button"]');
-                    if (btn && !btn.closest('ul') && !btn.closest('li')) return btn;
-                }
-            }
-        }
-        return null;
-    }
-
-    getPostData() {
-        const article = document.querySelector(SELECTORS.article);
-        if (!article) return { owner: "someone", caption: "" };
-        
-        const userLink = article.querySelector(SELECTORS.postOwner);
-        const owner = userLink ? userLink.getAttribute('href').split('/').filter(p => p)[0] : "someone";
-        
-        const captionEl = article.querySelector(SELECTORS.caption);
-        const caption = captionEl ? captionEl.innerText : "";
-
-        return { owner, caption };
-    }
-
-    shouldProcessPost(data) {
-        const { tags, condition } = this.filters;
-        const caption = (data.caption || "").toLowerCase();
-        const owner = (data.owner || "").toLowerCase();
-
-        const hasKeywordMatch = (val) => tags.some(t => t.type === 'keyword' && val.includes(t.value.toLowerCase()));
-        const isKeywordExactMatch = (val) => tags.some(t => t.type === 'keyword' && val.trim() === t.value.toLowerCase().trim());
-        const isUserMatch = (val) => tags.some(t => t.type === 'user' && val === t.value.toLowerCase());
-        const isHashtagMatch = (val) => tags.some(t => t.type === 'hashtag' && val.includes('#' + t.value.toLowerCase()));
-
-        const checkMatch = () => {
-            return hasKeywordMatch(caption) || isUserMatch(owner) || isHashtagMatch(caption);
-        };
-        
-        const checkExactMatch = () => {
-            return isKeywordExactMatch(caption) || isUserMatch(owner) || isHashtagMatch(caption);
-        };
-
-        switch (condition) {
-            case 'NONE':
-                return true;
-            case 'CONTAINS':
-                if (tags.length === 0) return true;
-                return checkMatch();
-            case 'DOES_NOT_CONTAIN':
-                if (tags.length === 0) return true;
-                return !checkMatch();
-            case 'IS':
-                if (tags.length === 0) return true;
-                return checkExactMatch();
-            case 'IS_NOT':
-                if (tags.length === 0) return true;
-                return !checkExactMatch();
-            case 'IS_EMPTY':
-                return caption.trim() === "";
-            case 'IS_NOT_EMPTY':
-                return caption.trim() !== "";
-            default:
-                return true;
-        }
-    }
-
-    async processOne(href) {
-        await this.checkStatus();
-
-        let tile = document.querySelector(`a[href="${href}"]`);
-        if (!tile) {
-            const shortHref = href.split('?')[0];
-            tile = document.querySelector(`a[href*="${shortHref}"]`);
-        }
-        if (!tile) return false;
-
-        const isReel = href.includes('/reel/');
-        const type = isReel ? "reel" : "post";
-
-        await humanScrollTo(tile, this.running);
-        this.updateUI("Analyzing target...");
-        
-        await humanClick(tile, this.running);
-        await sleep(rand(1000, 1500));
-
-        const postData = this.getPostData();
-        
-        if (!this.shouldProcessPost(postData)) {
-            this.updateUI(`Filtering: Skipping @${postData.owner}`);
-            await sleep(500);
-            await this.closePost();
-            this.processedLinks.add(href);
-            return true; 
-        }
-
-        const viewing = [`Targeting @${postData.owner}`, `Scanning @${postData.owner}'s ${type}`, `Evaluating interaction with @${postData.owner}`];
-        this.updateUI(viewing[rand(0, viewing.length - 1)]);
-
-        let anySuccess = false;
-        for (const action of this.currentActions) {
-            await this.checkStatus();
-            let btn = null;
-            for (let i = 0; i < 10; i++) {
-                await this.checkStatus();
-                btn = this.findActionButton(action);
-                if (btn) break;
-                await sleep(200);
-            }
-
-            if (btn && this.running) {
-                await humanClick(btn, this.running);
-                anySuccess = true;
-                const rewriteMsgs = [`Erased trace from @${postData.owner}`, `Redacted interaction with @${postData.owner}`, `Successfully cleared @${postData.owner}`, `@${postData.owner}'s history rewritten` ];
-                this.updateUI(rewriteMsgs[rand(0, rewriteMsgs.length - 1)]);
-                await sleep(rand(400, 800));
-            }
-        }
-
-        if (anySuccess) {
-            this.stats.success++;
-            if (isReel) this.stats.reels++; else this.stats.posts++;
-        } else {
-            this.stats.fail++;
-        }
-
-        await this.closePost();
-
-        this.stats.done++;
-        this.processedLinks.add(href);
-        this.updateUI();
-
-        await sleep(rand(1000, 1800));
-    }
-
-    async closePost() {
-        const close = document.querySelector(SELECTORS.closeBtn);
-        if (close) await humanClick(close, this.running);
-        else window.dispatchEvent(new KeyboardEvent('keydown', { 'key': 'Escape' }));
-    }
-
-    async start(actions, filters) {
-        if (this.running) return;
-        if (!isSupportedPage()) {
-            this.updateUI("Unsupported page. Navigate to Explore or Profile.");
-            return;
-        }
-
-        this.running = true;
-        this.currentActions = actions;
-        this.filters = filters || this.filters;
-        this.processedLinks.clear();
-        this.stats = { done: 0, success: 0, posts: 0, reels: 0, fail: 0 };
-        
-        this.updateUI("Initiating redaction protocol...");
-
-        try {
-            while (this.running) {
-                await this.checkStatus();
-
-                const tiles = Array.from(document.querySelectorAll(SELECTORS.tiles));
-                const uniqueHrefs = [...new Set(tiles.map(t => t.getAttribute('href')))];
-                const newHrefs = uniqueHrefs.filter(href => href && !this.processedLinks.has(href));
-
-                if (newHrefs.length > 0) {
-                    for (const href of newHrefs) {
-                        await this.checkStatus();
-                        await this.processOne(href);
-                    }
-                } else {
-                    this.updateUI("Searching for more traces...");
-                    const lastHeight = document.documentElement.scrollHeight;
-                    window.scrollBy({ top: rand(1000, 1500), behavior: 'smooth' });
-                    await sleep(rand(2000, 3000)); 
-                    if (document.documentElement.scrollHeight === lastHeight) break;
-                }
-            }
-        } catch (e) {
-            console.log("Doomscroll Bot stopped.");
-        } finally {
-            this.running = false;
-            chrome.runtime.sendMessage({ type: "WORKFLOW_COMPLETE", summary: this.getSummary() });
-        }
-    }
-
-    stop() {
-        this.running = false;
-    }
-
-    updateConfig(actions, filters) {
-        this.currentActions = actions || this.currentActions;
-        this.filters = filters || this.filters;
-    }
+    // Proxy for Main Script
+    get running() { return this.instructor.running; }
+    get stats() { return this.instructor.stats; }
+    get filters() { return this.instructor.filters; }
+    get currentActions() { return this.instructor.currentActions; }
+    
+    start(a, f) { this.instructor.start(a, f); }
+    stop() { this.instructor.stop(); }
+    resetInternalState() { this.dataCenter.load(); }
+    updateConfig(a, f) { this.instructor.currentActions = a; this.instructor.filters = f; }
 }
 
 window.engine = new DoomscrollEngine();

@@ -1,0 +1,16 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+
+# Debug logs
+debug/*.json
+!debug/README.md
+
+# Extension builds
+*.zip
+*.crx

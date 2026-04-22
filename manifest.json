@@ -1,6 +1,6 @@
 {
   "name": "Doomscroll Bot",
-  "version": "1.3.0",
+  "version": "1.7.5",
   "manifest_version": 3,
   "permissions": ["activeTab", "scripting", "tabs", "storage"],
   "host_permissions": [
@@ -29,10 +29,19 @@
       "matches": ["*://*.instagram.com/*"],
       "js": [
         "scripts/content/utils.js",
+        "scripts/content/core/DataCenter.js",
+        "scripts/content/core/Observer.js",
+        "scripts/content/core/Instructor.js",
         "scripts/content/engine.js",
         "scripts/content/main.js"
       ],
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["scripts/content/bridge.js"],
+      "matches": ["*://*.instagram.com/*"]
     }
   ]
 }
