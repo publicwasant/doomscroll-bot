@@ -25,6 +25,7 @@
           --radius-sm: 8px;
           --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
           --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+          --yellow: #ffcc00;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -250,7 +251,7 @@
             margin-bottom: 20px; border: 1px solid var(--border); font-size: 11px; 
             line-height: 1.4; color: var(--text-sub); display: flex; gap: 10px; align-items: flex-start;
         }
-        .hint-box svg { width: 16px; height: 16px; fill: var(--tag-link); flex-shrink: 0; margin-top: 1px; }
+        .hint-box svg { width: 16px; height: 16px; fill: var(--yellow); flex-shrink: 0; margin-top: 1px; }
 
         .footer { 
           padding-top: 16px; border-top: 1px solid var(--border); 
@@ -353,7 +354,7 @@
 </div>
 
 <div class="hint-box">
-    <svg viewBox="0 0 24 24"><path d="M12 2c-3.859 0-7 3.141-7 7 0 1.825.698 3.482 1.841 4.735l.159.174v2.091c0 .552.448 1 1 1h8c.552 0 1-.448 1-1v-2.091l.159-.174c1.143-1.253 1.841-2.91 1.841-4.735 0-3.859-3.141-7-7-7zm2 14h-4v-1h4v1zm1.159-4.265c-.104.114-.159.262-.159.414v.851h-6v-.851c0-.152-.055-.3-.159-.414-1.01-1.107-1.574-2.544-1.574-4.116 0-3.309 2.691-6 6-6s6 2.691 6 6c0 1.572-.564 3.009-1.574 4.116z"/></svg>
+    <svg viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C8.67 12.05 8 10.58 8 9c0-2.21 1.79-4 4-4s4 1.79 4 4c0 1.58-.67 3.05-2.15 4.1z"/></svg>
     <div>Support <b>@username</b> and <b>#hashtag</b> for precise targeting. Click tags to view on Instagram.</div>
 </div>
 
