@@ -2,7 +2,12 @@
 ### *Based DOM Automation*
 
 <p align="center">
-  <img src="assets/screenshot-v1.1.0/Screenshot%202569-04-22%20at%2008.36.01.png" width="250">
+  <img src="assets/screenshot-v1.3.0/Screenshot%202569-04-22%20at%2017.04.05.png" width="180">
+  <img src="assets/screenshot-v1.3.0/Screenshot%202569-04-22%20at%2017.04.11.png" width="180">
+  <img src="assets/screenshot-v1.3.0/Screenshot%202569-04-22%20at%2017.04.23.png" width="180">
+  <br>
+  <img src="assets/screenshot-v1.3.0/Screenshot%202569-04-22%20at%2017.05.07.png" width="180">
+  <img src="assets/screenshot-v1.3.0/Screenshot%202569-04-22%20at%2017.05.09.png" width="180">
 </p>
 
 **Doomscroll Bot** is a high-end, minimalist Chrome Extension designed for those who want to curate their digital legacy. It provides a seamless, automated way to manage your past interactions on Instagram—allowing you to "rewrite" your history by undoing likes, reposts, and saves with surgical precision and human-like behavior.
