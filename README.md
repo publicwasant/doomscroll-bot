@@ -69,7 +69,7 @@ Built to be indistinguishable from a real user.
 ---
 
 ## 👨‍💻 Author
-Built with passion by **[privatewasant](https://github.com/publicwasant/doomscroll-bot)**.
+Built with passion by **[publicwasant](https://github.com/publicwasant/doomscroll-bot)**.
 *"Rewriting history, one post at a time."*
 
 ---
