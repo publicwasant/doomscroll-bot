@@ -1,5 +1,5 @@
 /**
- * Main Content Script Entry Point v2.2.5 (Integrated Wipe & Export)
+ * Web Automation Engine v1.0.0 - Main Entry Point
  */
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -7,8 +7,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         sendResponse({ 
             running: window.engine.running, 
             stats: window.engine.stats, 
-            currentAction: window.engine.currentActions, 
-            supported: isSupportedPage(),
+            currentAction: window.master.state, // ดึงสถานะโดยตรงจาก Master
+            supported: true, // หรือเช็คผ่าน utils ถ้าจำเป็น
             filters: window.engine.filters,
             settings: window.engine.settings
         });
@@ -34,16 +34,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
     if (msg.type === "FULL_WIPE_RELOAD") {
         window.engine.fullWipe().then(() => {
-            location.reload(); // บังคับรีโหลดหน้าเว็บทันทีหลังล้างข้อมูล
+            location.reload();
         });
         sendResponse({ status: "wiping" });
-    }
-
-    if (msg.type === "EXPORT_DATA") {
-        window.doomAPI.export().then(res => {
-            console.log("[Main] Export result:", res);
-        });
-        sendResponse({ status: "exporting" });
     }
     
     return true; 

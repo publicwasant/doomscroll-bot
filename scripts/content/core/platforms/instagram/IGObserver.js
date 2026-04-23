@@ -1,71 +1,101 @@
 /**
- * IGObserver - หน่วยสอดแนมเฉพาะสำหรับหน้าเว็บ Instagram v2.2.5
+ * Instagram Scout (Observer) v1.0.6 - Improved Data Scan & Captions
  */
 class IGObserver extends BaseObserver {
-    constructor(dataCenter, instructor) {
-        super(dataCenter, instructor);
-        this.discoverySet = new Set(); 
-        this.selectors = {
-            tiles: 'a[href*="/p/"], a[href*="/reel/"]', 
-            postOwner: 'header a[href^="/"][role="link"], span > a[href^="/"][role="link"]', 
-            realCaption: 'article div[dir="auto"] > span, article h1' 
-        };
+    constructor(master) {
+        super(master, "IGObserver");
     }
 
-    start() {
-        this.scan(document.body); 
-        const observer = new MutationObserver((mutations) => {
-            for (const mutation of mutations) {
-                mutation.addedNodes.forEach(node => {
-                    if (node.nodeType === 1) this.scan(node); 
-                });
-            }
-        });
-        observer.observe(document.body, { childList: true, subtree: true });
-        console.log("[IGObserver] Passive Scanning Activated");
-    }
-
-    /**
-     * ล้างประวัติการสแกนใน Session ปัจจุบัน
-     */
-    wipe() {
-        this.discoverySet.clear();
-        console.log("[IGObserver] Discovery history wiped.");
-    }
-
-    scan(root) {
-        const tiles = root.querySelectorAll(this.selectors.tiles);
-        tiles.forEach(tile => {
-            const href = tile.getAttribute('href');
-            if (!href || this.discoverySet.has(href)) return;
-
-            let user = "";
-            const container = tile.closest('article') || tile.parentElement;
-            const userLink = container.querySelector(this.selectors.postOwner);
-            if (userLink) user = userLink.getAttribute('href').split('/').filter(p => p)[0];
-
-            const pathParts = window.location.pathname.split('/').filter(p => p);
-            if (pathParts.length === 1 && !['explore', 'reels'].includes(pathParts[0])) user = pathParts[0];
-
-            const existing = this.dataCenter.getPost(href);
-            if (!existing || existing.status !== 'completed') {
-                this.dataCenter.updatePost(href, { user, status: 'discovered' });
-                this.instructor.enqueue(href); 
-                this.discoverySet.add(href);
-            }
-        });
-    }
-
-    async fillCurrentPost(href) {
-        const article = document.querySelector('article[role="presentation"], article');
-        if (!article) return null;
-
-        const capEl = article.querySelector(this.selectors.realCaption);
-        const userLink = article.querySelector(this.selectors.postOwner);
+    async performScan(config) {
+        waeUtils.log("OBSERVER", "Initiating refined scan on Instagram Feed...");
         
-        const user = userLink ? userLink.getAttribute('href').split('/').filter(p => p)[0] : "someone";
-        const caption = capEl ? capEl.innerText.trim() : "";
+        await waeUtils.sleep(1500);
 
-        return this.dataCenter.updatePost(href, { user, caption, status: 'completed' });
+        let postElements = document.querySelectorAll('article');
+        if (postElements.length === 0) {
+            postElements = document.querySelectorAll('div[role="menuitem"], div._ab8w._ab94._ab99._ab9f._ab9m._ab9p._abcm');
+        }
+
+        const results = [];
+        const limit = config?.limit || 10;
+
+        for (const post of postElements) {
+            if (results.length >= limit) break;
+            try {
+                // 1. Find Post Link
+                const linkEl = post.querySelector('a[href*="/p/"], a[href*="/reels/"]');
+                if (!linkEl) continue;
+
+                // 2. Find Username
+                const userEl = post.querySelector('header a[role="link"], div._aacl._aaco._aacw._aacx._aad7._aade a, a[href^="/"]');
+                let username = 'unknown';
+                if (userEl) {
+                    username = userEl.innerText.split('\n')[0].trim();
+                } else {
+                    const profileImg = post.querySelector('header img');
+                    if (profileImg && profileImg.alt) {
+                        username = profileImg.alt.replace("'s profile picture", "").replace("รูปโปรไฟล์ของ ", "");
+                    }
+                }
+
+                // 3. Find Media Link (Exclude profile pictures)
+                // We look specifically for images inside the post content area, not header
+                const contentArea = post.querySelector('div._aagv, div._aast, div._acay, div._aato');
+                const imgEl = (contentArea || post).querySelector('img[src*="fbcdn"]:not([alt*="profile"]), video');
+                const mediaUrl = imgEl ? (imgEl.tagName === 'IMG' ? imgEl.src : 'video_content') : 'unknown';
+
+                // 4. Find Caption (More robust selectors)
+                // IG captions are usually in a span inside a div with class _a9zs or similar
+                // Or look for the first span that contains text after the header
+                const captionSelectors = [
+                    'div._a9zs span', 
+                    'span._ap30', 
+                    'div._aa6z span',
+                    'h1', // Some posts use h1 for caption
+                    'div[role="button"] span'
+                ];
+                
+                let captionText = "";
+                for (let selector of captionSelectors) {
+                    const el = post.querySelector(selector);
+                    if (el && el.innerText.trim().length > 0) {
+                        captionText = el.innerText.trim();
+                        break;
+                    }
+                }
+
+                // If still empty, try finding any span that is likely the caption (long text)
+                if (!captionText) {
+                    const spans = post.querySelectorAll('span');
+                    for (let span of spans) {
+                        if (span.innerText.length > 20 && !span.querySelector('svg')) {
+                            captionText = span.innerText.trim();
+                            break;
+                        }
+                    }
+                }
+
+                results.push({
+                    id: linkEl.getAttribute('href'),
+                    user: username,
+                    element: post,
+                    valid: true,
+                    content: {
+                        link: mediaUrl,
+                        caption: captionText
+                    }
+                });
+                
+            } catch (e) {
+                // Silently skip
+            }
+        }
+
+        waeUtils.log("OBSERVER", `Discovery complete. Found ${results.length} posts.`);
+        return results;
     }
+}
+
+if (window.master) {
+    new IGObserver(window.master);
 }
