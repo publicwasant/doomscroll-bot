@@ -1,5 +1,5 @@
 /**
- * IGInstructor - Instagram Specific Executor v2.0.2 (Save Button Precision Fix)
+ * IGInstructor - Instagram Specific Executor v2.2.2 (Live Update & Speed Fix)
  */
 class IGInstructor extends BaseInstructor {
     constructor(dataCenter) {
@@ -7,16 +7,16 @@ class IGInstructor extends BaseInstructor {
         this.currentTarget = null;
         this.currentActions = ["LIKE"];
         this.filters = { tags: [], condition: 'NONE' };
+        this.settings = { autoScroll: true, speedMultiplier: 1.0 };
     }
 
-    async start(actions, filters) {
+    async start(actions, filters, settings) {
         if (this.running) return;
         this.running = true;
-        this.currentActions = actions;
-        this.filters = filters;
-        this.stats = { done: 0, success: 0, posts: 0, reels: 0 };
+        this.updateConfig(actions, filters, settings);
         
-        console.log("[IGInstructor] Started with actions:", actions);
+        this.stats = { done: 0, success: 0, posts: 0, reels: 0 };
+        console.log("[IGInstructor] Bot Started with settings:", this.settings);
         this.updateUI("IG Instructor: Active");
 
         try {
@@ -24,9 +24,14 @@ class IGInstructor extends BaseInstructor {
                 this.checkStatus();
 
                 if (this.queue.length === 0) {
-                    this.updateUI("Instructor: Searching...");
-                    window.scrollBy({ top: 1000, behavior: 'smooth' });
-                    await sleep(3000);
+                    if (this.settings.autoScroll) {
+                        this.updateUI("Instructor: Searching...");
+                        window.scrollBy({ top: 1000, behavior: 'smooth' });
+                    } else {
+                        this.updateUI("Instructor: Idle (Auto-Scroll Off)");
+                    }
+                    // Speed multiplier applies to idle time too
+                    await sleep(3000 * Math.max(0.5, this.settings.speedMultiplier));
                     continue;
                 }
 
@@ -34,15 +39,24 @@ class IGInstructor extends BaseInstructor {
                 await this.executeActionWorkflow(href);
             }
         } catch (e) { 
-            if (e.message === "INSTRUCTOR_STOPPED") {
-                console.log("[IGInstructor] Halted immediately.");
-            } else {
-                console.error("[IGInstructor] Loop Exception:", e);
-            }
+            if (e.message !== "INSTRUCTOR_STOPPED") console.error("[IGInstructor] Loop Exception:", e);
         } finally { 
             this.running = false; 
             this.updateUI("System Standby");
         }
+    }
+
+    /**
+     * อัปเดตค่า Config แบบ Live โดยไม่ทำลาย Object Reference เดิม
+     */
+    updateConfig(actions, filters, settings) {
+        if (actions) this.currentActions = actions;
+        if (filters) this.filters = filters;
+        if (settings) {
+            this.settings.autoScroll = settings.autoScroll;
+            this.settings.speedMultiplier = settings.speedMultiplier;
+        }
+        console.log("[IGInstructor] Config Live Updated:", this.settings);
     }
 
     async executeActionWorkflow(href) {
@@ -56,55 +70,51 @@ class IGInstructor extends BaseInstructor {
             this.checkStatus();
             await humanClick(tile, this.running);
             
-            await sleep(rand(2000, 3000));
+            // Adjust delay based on speed multiplier
+            await sleep(rand(1500, 2500) * this.settings.speedMultiplier);
             this.checkStatus();
 
             const fullPost = await this.observer.fillCurrentPost(href);
             this.currentTarget = fullPost;
 
             if (!this.shouldProcessPost(fullPost)) {
-                this.updateUI(`Instructor: Filter skipped @${fullPost.user}`);
+                this.updateUI(`Instructor: Skipped @${fullPost.user}`);
                 await this.closePost();
                 return;
             }
 
-            this.updateUI(`Instructor: Working on @${fullPost.user}`);
+            this.updateUI(`Instructor: Processing @${fullPost.user}`);
             let anySuccess = false;
 
             for (const action of this.currentActions) {
                 this.checkStatus();
                 
                 let btn = null;
-                // Retry searching for the button
                 for (let i = 0; i < 3; i++) {
                     btn = this.findActionButton(action);
                     if (btn) break;
-                    await sleep(600);
+                    await sleep(600 * this.settings.speedMultiplier);
                 }
 
                 if (btn && this.running) {
-                    console.log(`[IGInstructor] Executing ${action} on @${fullPost.user}`);
                     await humanClick(btn, this.running);
                     anySuccess = true;
-                    await sleep(rand(1200, 1800)); // ให้เวลาระบบ Update DOM
+                    await sleep(rand(1000, 1500) * this.settings.speedMultiplier);
                 }
             }
 
-            if (anySuccess) {
-                this.stats.success++;
-                if (href.includes('/reel/')) this.stats.reels++; else this.stats.posts++;
-            }
+            if (anySuccess) this.stats.success++;
 
             this.checkStatus();
             await this.closePost();
             this.stats.done++;
             this.currentTarget = null;
             this.updateUI();
-            await sleep(rand(1000, 2000));
+            
+            await sleep(rand(1000, 2000) * this.settings.speedMultiplier);
             
         } catch (e) {
             if (e.message === "INSTRUCTOR_STOPPED") throw e;
-            console.error(`[IGInstructor] Error on ${href}:`, e);
             await this.closePost();
         }
     }
@@ -123,44 +133,26 @@ class IGInstructor extends BaseInstructor {
         return this.filters.condition.includes('NOT') ? !match : match;
     }
 
-    /**
-     * ค้นหาปุ่ม Action โดยเน้นการหาจาก SVG Label ภายใน Modal
-     */
     findActionButton(action) {
         const labels = { 
             LIKE: ["Like", "Unlike", "ถูกใจ", "เลิกถูกใจ"], 
             REPOST: ["Repost", "Unrepost", "รีโพสต์", "เลิกโพสต์ใหม่"], 
             SAVE: ["Save", "Remove", "บันทึก", "เลิกบันทึก", "Unsave", "Remove from saved", "ลบออกจากการบันทึก"] 
         }[action];
-        
-        // ค้นหาใน Modal หรือ Article ที่มองเห็น
-        const scope = document.querySelector('div[role="presentation"] article') || 
-                      document.querySelector('article') || 
-                      document;
-
-        // ค้นหา SVG ทุกลูกที่มี aria-label ตรงกับที่เราต้องการ
+        const scope = document.querySelector('div[role="presentation"] article') || document.querySelector('article') || document;
         const allSvgs = Array.from(scope.querySelectorAll('svg[aria-label]'));
         const targetSvg = allSvgs.find(svg => labels.includes(svg.getAttribute('aria-label')));
-
-        if (targetSvg) {
-            // ส่งคืนตัวปุ่มที่เป็น Parent ของ SVG นั้น
-            return targetSvg.closest('[role="button"]') || targetSvg.parentElement;
-        }
-
-        return null;
+        return targetSvg ? (targetSvg.closest('[role="button"]') || targetSvg.parentElement) : null;
     }
 
     async closePost() {
-        const closeBtn = document.querySelector('svg[aria-label="Close"]') || 
-                         document.querySelector('svg[aria-label="ปิด"]') ||
-                         document.querySelector('div[role="button"] svg'); // Fallback สำหรับปุ่มปิดบางแบบ
-                         
+        const closeBtn = document.querySelector('svg[aria-label="Close"]') || document.querySelector('svg[aria-label="ปิด"]');
         if (closeBtn) {
             const btn = closeBtn.closest('[role="button"]') || closeBtn.parentElement;
             await humanClick(btn, this.running);
         } else {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
         }
-        await sleep(500);
+        await sleep(500 * this.settings.speedMultiplier);
     }
 }

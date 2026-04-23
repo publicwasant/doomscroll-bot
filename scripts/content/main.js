@@ -1,5 +1,5 @@
 /**
- * Main Content Script Entry Point v1.2.0
+ * Main Content Script Entry Point v2.2.2 (Integrated Wipe & Export)
  */
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -9,14 +9,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             stats: window.engine.stats, 
             currentAction: window.engine.currentActions, 
             supported: isSupportedPage(),
-            filters: window.engine.filters
+            filters: window.engine.filters,
+            settings: window.engine.settings
         });
         return;
     }
     
     if (msg.type === "START") {
         if (!window.engine.running) {
-            window.engine.start(msg.actions, msg.filters);
+            window.engine.start(msg.actions, msg.filters, msg.settings);
         }
         sendResponse({ status: "ok" });
     }
@@ -27,13 +28,22 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
     
     if (msg.type === "UPDATE_CONFIG") {
-        window.engine.updateConfig(msg.actions, msg.filters);
+        window.engine.updateConfig(msg.actions, msg.filters, msg.settings);
         sendResponse({ status: "ok" });
     }
 
-    if (msg.type === "RESET_ENGINE") {
-        window.engine.resetInternalState();
-        sendResponse({ status: "ok" });
+    if (msg.type === "FULL_WIPE_RELOAD") {
+        window.engine.fullWipe().then(() => {
+            location.reload(); // บังคับรีโหลดหน้าเว็บทันทีหลังล้างข้อมูล
+        });
+        sendResponse({ status: "wiping" });
+    }
+
+    if (msg.type === "EXPORT_DATA") {
+        window.doomAPI.export().then(res => {
+            console.log("[Main] Export result:", res);
+        });
+        sendResponse({ status: "exporting" });
     }
     
     return true; 
