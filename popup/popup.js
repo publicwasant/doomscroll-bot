@@ -1,5 +1,5 @@
 /**
- * Doomscroll Bot - Professional MVVM v2.3.6 (Fixed Activities & Condition Dropdown)
+ * Doomscroll Bot - Professional MVVM v2.3.7 (Fixed Speed Logic & Stop Propagation)
  */
 
 class PopupViewModel {
@@ -64,24 +64,28 @@ class PopupViewModel {
         if (saved.selectedActions) this.state.selectedActions = saved.selectedActions;
         if (saved.settings) this.state.settings = saved.settings;
 
-        // 1. Fix Activities Selection
+        // 1. Activities Selection Fix
         this.elements.actionInputs.forEach(input => {
             input.checked = this.state.selectedActions.includes(input.value);
-            // Use 'click' instead of 'change' to ensure immediate state sync
-            input.addEventListener('click', (e) => {
+            input.onclick = (e) => {
+                e.stopPropagation(); // Avoid closing menus
                 this.state.selectedActions = Array.from(this.elements.actionInputs)
                     .filter(i => i.checked).map(i => i.value);
                 this.persistAndSync();
-            });
+            };
         });
 
-        // 2. Speed Slider
+        // 2. Speed Slider (Mapping: Left=Slow/3.0, Right=Fast/0.1)
         if (this.elements.speedSlider) {
-            this.elements.speedSlider.value = this.state.settings.speedMultiplier;
-            this.elements.speedSlider.oninput = () => {
-                this.state.settings.speedMultiplier = parseFloat(this.elements.speedSlider.value);
+            // Internal calculation: Multiplier = 3.1 - Value (Slider 0.1 -> Mult 3.0, Slider 3.0 -> Mult 0.1)
+            this.elements.speedSlider.value = (3.1 - this.state.settings.speedMultiplier).toFixed(1);
+            this.elements.speedSlider.oninput = (e) => {
+                e.stopPropagation(); // FIX: Don't close settings menu when sliding
+                const val = parseFloat(this.elements.speedSlider.value);
+                this.state.settings.speedMultiplier = parseFloat((3.1 - val).toFixed(1));
                 this.persistAndSync();
             };
+            this.elements.speedSlider.onclick = (e) => e.stopPropagation();
         }
 
         this.elements.btnPlay.onclick = () => this.toggleWorkflow();
@@ -101,8 +105,8 @@ class PopupViewModel {
             this.render();
         };
 
-        this.elements.btnReset.onclick = () => this.factoryReset();
-        this.elements.btnExport.onclick = () => this.exportData();
+        this.elements.btnReset.onclick = (e) => { e.stopPropagation(); this.factoryReset(); };
+        this.elements.btnExport.onclick = (e) => { e.stopPropagation(); this.exportData(); };
 
         this.initFilterInput();
         this.initDragToScroll();
@@ -112,6 +116,8 @@ class PopupViewModel {
             this.state.isSettingsOpen = false;
             this.render();
         });
+
+        this.elements.settingsMenu.onclick = (e) => e.stopPropagation();
 
         chrome.runtime.onMessage.addListener((msg) => {
             if (msg.type === "STATS_UPDATE") {
@@ -153,7 +159,6 @@ class PopupViewModel {
             const val = input.value.trim().toLowerCase();
             if (!val) { this.hideSuggestions(); return; }
             const data = await chrome.storage.local.get(["all_user", "all_hashtag"]);
-            
             let pool = [];
             if (val.startsWith('@')) pool = (data.all_user || []).filter(u => u.includes(val.slice(1))).map(u => ({ type: 'user', value: u }));
             else if (val.startsWith('#')) pool = (data.all_hashtag || []).filter(h => h.includes(val.slice(1))).map(h => ({ type: 'hashtag', value: h }));
@@ -233,54 +238,27 @@ class PopupViewModel {
 
     render() {
         const { isRunning, stats, statusMessage, filters, isDropdownOpen, isSettingsOpen } = this.state;
-        
-        // Update Labels
         this.elements.btnLabel.style.display = isRunning ? "none" : "block";
         this.elements.btnCount.style.display = isRunning ? "block" : "none";
         this.elements.btnCount.textContent = stats.success || 0;
         this.elements.btnPlay.classList.toggle("is-running", isRunning);
         this.elements.statusLabel.textContent = isRunning ? statusMessage : "System Standby";
-        
-        // Menus Visibility
         this.elements.settingsMenu.style.display = isSettingsOpen ? 'block' : 'none';
         this.elements.conditionMenu.style.display = isDropdownOpen ? 'block' : 'none';
-        
-        // 4. Condition Dropdown Rendering & Event Binding
         const currentCond = this.conditions.find(c => c.id === filters.condition) || this.conditions[0];
         this.elements.currentConditionText.textContent = currentCond.label;
-        this.elements.conditionMenu.innerHTML = this.conditions.map(c => `
-            <div class="dropdown-item ${c.id === filters.condition ? 'active' : ''}" data-id="${c.id}">${c.label}</div>
-        `).join('');
-
+        this.elements.conditionMenu.innerHTML = this.conditions.map(c => `<div class="dropdown-item ${c.id === filters.condition ? 'active' : ''}" data-id="${c.id}">${c.label}</div>`).join('');
         this.elements.conditionMenu.querySelectorAll('.dropdown-item').forEach(item => {
-            item.onclick = (e) => {
-                e.stopPropagation();
-                this.state.filters.condition = item.dataset.id;
-                this.state.isDropdownOpen = false;
-                this.persistAndSync();
-                this.render(); // Force re-render to update inputs visibility
-            };
+            item.onclick = (e) => { e.stopPropagation(); this.state.filters.condition = item.dataset.id; this.state.isDropdownOpen = false; this.persistAndSync(); this.render(); };
         });
-
-        // Toggle Filter UI
         const needsInput = !['IS_EMPTY', 'IS_NOT_EMPTY', 'NONE'].includes(filters.condition);
         this.elements.filterInputGroup.classList.toggle('hidden', !needsInput);
         this.elements.tagsDisplayWrapper.classList.toggle('hidden', !needsInput);
-        
-        // Tags
-        const tagsHtml = filters.tags.map((tag, i) => `
-            <div class="tag ${tag.type !== 'keyword' ? 'clickable' : ''}" data-index="${i}">
-                <span>${tag.type === 'user' ? '@' : tag.type === 'hashtag' ? '#' : ''}${tag.value}</span>
-                <span class="tag-remove" data-index="${i}">&times;</span>
-            </div>
-        `).join('');
-        
-        if (this.lastTagsHash !== tagsHtml) {
+        const tagsHtml = filters.tags.map((tag, i) => `<div class="tag ${tag.type !== 'keyword' ? 'clickable' : ''}" data-index="${i}"><span>${tag.type === 'user' ? '@' : tag.type === 'hashtag' ? '#' : ''}${tag.value}</span><span class="tag-remove" data-index="${i}">&times;</span></div>`).join('');
+        if (this.lastRenderedTags !== tagsHtml) {
             this.elements.tagsDisplay.innerHTML = tagsHtml;
             this.elements.tagsDisplay.querySelectorAll('.tag').forEach(tagEl => {
-                const idx = tagEl.dataset.index;
-                const tag = filters.tags[idx];
-                const removeBtn = tagEl.querySelector('.tag-remove');
+                const idx = tagEl.dataset.index; const tag = filters.tags[idx]; const removeBtn = tagEl.querySelector('.tag-remove');
                 tagEl.onclick = (e) => {
                     if (e.target === removeBtn) { e.stopPropagation(); this.removeTag(idx); }
                     else if (tag.type === 'user') window.open(`https://instagram.com/${tag.value}`, '_blank');
