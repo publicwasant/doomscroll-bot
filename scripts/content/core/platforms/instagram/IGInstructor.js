@@ -1,5 +1,5 @@
 /**
- * IGInstructor - Instagram Specific Executor v2.2.2 (Live Update & Speed Fix)
+ * IGInstructor - Instagram Specific Executor v2.2.5 (Live Update & Speed Fix)
  */
 class IGInstructor extends BaseInstructor {
     constructor(dataCenter) {

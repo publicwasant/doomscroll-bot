@@ -1,5 +1,5 @@
 /**
- * Doomscroll Bot - Background Service Worker v2.2.2
+ * Doomscroll Bot - Background Service Worker v2.2.5
  * Handles downloads and cross-origin tasks
  */
 

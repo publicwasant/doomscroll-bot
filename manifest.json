@@ -1,6 +1,6 @@
 {
   "name": "Doomscroll Bot",
-  "version": "2.2.2",
+  "version": "2.2.5",
   "manifest_version": 3,
   "permissions": ["activeTab", "scripting", "tabs", "storage", "downloads"],
   "host_permissions": [

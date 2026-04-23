@@ -1,5 +1,5 @@
 /**
- * Doomscroll Bot - Main World Bridge v2.0.0
+ * Doomscroll Bot - Main World Bridge v2.2.5
  */
 
 window.doom = {
@@ -38,7 +38,7 @@ window.doom = {
      * Shows command directory in console (Synced with README.md)
      */
     help: () => {
-        console.group("%c🕵️‍♂️ Doomscroll Bot Developer API v2.0.0", "color: #bc1888; font-size: 14px; font-weight: bold;");
+        console.group("%c🕵️‍♂️ Doomscroll Bot Developer API v2.2.5", "color: #bc1888; font-size: 14px; font-weight: bold;");
         console.table([
             { Command: "doom.posts()", "Return Type": "Array<Object>", Description: "Lists all discovered posts with metadata (user, caption)." },
             { Command: "doom.users()", "Return Type": "Array<String>", Description: "Lists all unique usernames learned by the bot." },
@@ -60,4 +60,4 @@ window.doom = {
     }
 };
 
-console.log("%c[Doomscroll] Bridge v2.0.0 Ready. Type doom.help()", "color: #bc1888; font-weight: bold;");
+console.log("%c[Doomscroll] Bridge v2.2.5 Ready. Type doom.help()", "color: #bc1888; font-weight: bold;");

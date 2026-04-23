@@ -1,5 +1,5 @@
 /**
- * Main Content Script Entry Point v2.2.2 (Integrated Wipe & Export)
+ * Main Content Script Entry Point v2.2.5 (Integrated Wipe & Export)
  */
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {

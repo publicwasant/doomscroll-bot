@@ -1,5 +1,5 @@
 /**
- * Doomscroll Bot Orchestrator v2.2.4 (Full Triple-Thread Wipe Support)
+ * Doomscroll Bot Orchestrator v2.2.5 (Full Triple-Thread Wipe Support)
  */
 class DoomscrollEngine {
     constructor() {
@@ -74,7 +74,7 @@ class DoomscrollEngine {
             export: async () => {
                 const storageData = await chrome.storage.local.get(null);
                 const snapshot = {
-                    metadata: { project: "Doomscroll Bot", version: "2.2.4", time: new Date().toLocaleString() },
+                    metadata: { project: "Doomscroll Bot", version: "2.2.5", time: new Date().toLocaleString() },
                     threads: {
                         data_center: { all_posts: Array.from(this.dataCenter.posts.values()) },
                         instructor: { stats: this.instructor.stats, queue: this.instructor.queue },

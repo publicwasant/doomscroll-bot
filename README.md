@@ -1,13 +1,13 @@
-# 🕵️‍♂️ Doomscroll Bot v2.0.0
+# 🕵️‍♂️ Doomscroll Bot v2.2.5
 ### *The Ultimate Triple-Thread Web Automation Framework*
 
-**Doomscroll Bot** is a professional-grade Chrome Extension designed for high-precision digital legacy curation. Unlike standard scripts, v2.0.0 introduces a **Modular Universal Framework** that mimics human behavior while building an autonomous intelligence database of your social interactions.
+**Doomscroll Bot** is a professional-grade Chrome Extension designed for high-precision digital legacy curation. Unlike standard scripts, v2.2.5 introduces a **Modular Universal Framework** that mimics human behavior while building an autonomous intelligence database of your social interactions.
 
 ---
 
 ## 🏗️ Architecture: The Triple-Thread System
 
-Version 2.0.0 is re-engineered from the ground up using an **Asynchronous Task-Based Architecture**. The system operates through three specialized threads:
+Version 2.2.5 is re-engineered from the ground up using an **Asynchronous Task-Based Architecture**. The system operates through three specialized threads:
 
 ### 1. **Data Center (The Librarian) 📚**
 *Thread 1: Storage & Indexing*
@@ -58,6 +58,7 @@ The bot exposes a powerful `doom` object in the browser console for inspection a
 - **Surgical Filtering**: Precise targeting by `@user`, `#hashtag`, or `keyword` with logic conditions.
 - **Passive Intelligence**: Knowledge base builds automatically as you browse normally.
 - **Human behavior**: Evades detection through randomized patterns and smooth traversal.
+- **Triple-Thread Wipe**: Deep cleaning of RAM, Disk, and Discovery state for fresh starts.
 
 ---
 
@@ -81,4 +82,4 @@ Built with passion by **[publicwasant](https://github.com/publicwasant/doomscrol
 *"Rewriting history, one task at a time."*
 
 ---
-**Universal Automation Framework** | **IG Doomscroll Bot v2.0.0**
+**Universal Automation Framework** | **IG Doomscroll Bot v2.2.5**

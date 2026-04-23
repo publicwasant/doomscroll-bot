@@ -1,5 +1,5 @@
 /**
- * IGDataCenter - ระบบจัดการข้อมูลเฉพาะสำหรับ Instagram
+ * IGDataCenter - ระบบจัดการข้อมูลเฉพาะสำหรับ Instagram v2.2.5
  * ทำหน้าที่สกัดชื่อผู้ใช้และ Hashtag เพื่อทำระบบ Suggestion
  */
 class IGDataCenter extends BaseDataCenter {

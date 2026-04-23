@@ -1,5 +1,5 @@
 /**
- * IGObserver - หน่วยสอดแนมเฉพาะสำหรับหน้าเว็บ Instagram
+ * IGObserver - หน่วยสอดแนมเฉพาะสำหรับหน้าเว็บ Instagram v2.2.5
  */
 class IGObserver extends BaseObserver {
     constructor(dataCenter, instructor) {
