@@ -1,85 +1,92 @@
-# 🕵️‍♂️ Doomscroll Bot v2.2.5
-### *The Ultimate Triple-Thread Web Automation Framework*
+# 🤖 Web Automation Engine (WAE) v1.1.1
+### *The Next-Gen Modular Framework for Professional Web Automation*
 
-**Doomscroll Bot** is a professional-grade Chrome Extension designed for high-precision digital legacy curation. Unlike standard scripts, v2.2.5 introduces a **Modular Universal Framework** that mimics human behavior while building an autonomous intelligence database of your social interactions.
+**Web Automation Engine (WAE)** is a high-level, production-ready Chrome Extension framework designed for scalable and stealthy web automation. Built on the **Master-Observer-Instructor (MOI)** architecture, it transcends simple scripting by providing a decoupled, thread-like system for data discovery and human-mimic execution.
 
 ---
 
-## 🏗️ Architecture: The Triple-Thread System
+## 🏗️ Architecture: The MOI Pattern
 
-Version 2.2.5 is re-engineered from the ground up using an **Asynchronous Task-Based Architecture**. The system operates through three specialized threads:
+WAE operates through a centralized "Brain" and specialized "Action Threads" to ensure maximum flexibility and reliability.
 
-### 1. **Data Center (The Librarian) 📚**
-*Thread 1: Storage & Indexing*
-- **Source of Truth**: Centralized management of `all_posts`, `all_user`, and `all_hashtag`.
-- **Auto-Indexing**: Automatically extracts and categorizes data from scanned posts.
-- **Persistence**: Handles mission-critical data I/O using `chrome.storage.local`.
+### 1. **Master (The Brain) 🧠**
+*Central Controller & Decision Maker*
+- **Orchestration**: Manages the mission lifecycle: `Scanning` -> `Processing` -> `Executing`.
+- **Intelligence**: Transforms raw discovered data into actionable tasks based on user filters.
+- **Central Database**: Maintains a real-time repository of discovered elements and mission statistics.
 
 ### 2. **Observer (The Scout) 🔭**
-*Thread 2: Real-time Discovery*
-- **Reactive Scanning**: Detects content changes instantly using `MutationObserver`.
-- **Deep Extraction**: Features a "strike-on-open" strategy to capture full metadata.
-- **Discovery Queue**: Feeds potential targets to the Instructor.
+*Passive & Active Discovery Thread*
+- **Platform Specific**: Decoupled observers (e.g., `IGObserver`) know exactly how to navigate specific DOM structures.
+- **Enriched Extraction**: Captures deep metadata including User IDs, Media Links, and Captions.
+- **Robustness**: Features multi-layer fallback selectors to survive website UI updates.
 
-### 3. **Instructor (The Commander) ⚡**
-*Thread 3: Workflow Execution*
-- **Atomic Stop**: Robust kill-switch mechanism for immediate halting.
-- **Human-Mimic Engine**: Simulated natural movement and jittered coordinates.
-- **Queue Consumer**: Autonomous cycle with self-healing auto-scrolling.
-
----
-
-## 🛠️ Developer API (The Doom Bridge)
-
-The bot exposes a powerful `doom` object in the browser console for inspection and automation.
-
-| Command | Return Type | Description |
-| :--- | :--- | :--- |
-| `doom.help()` | `void` | Displays the command directory and usage tips. |
-| `doom.posts()` | `Array<Object>` | Lists all discovered posts with metadata (href, user, caption). |
-| `doom.users()` | `Array<String>` | Lists all unique usernames learned by the bot. |
-| `doom.hashtag()` | `Array<String>` | Lists all hashtags extracted from scanned posts. |
-| `doom.queue()` | `Array<String>` | Shows the current backlog of tasks waiting for execution. |
-| `doom.state()` | `Object` | Real-time stats (success rate, done count) and engine status. |
-| `doom.target()` | `Object \| null` | Inspects metadata of the post currently being processed. |
-| `doom.health()` | `Object` | Runs a diagnostic on Instagram's UI selectors (DOM Health). |
-| `doom.config()` | `Object` | Shows current bot configuration (Active Actions & Filters). |
-| `doom.start(act, cond, tags)` | `void` | Manual trigger. Parameters: `actions` (Array), `condition` (String), `tags` (Array). |
-| `doom.stop()` | `void` | Immediate emergency stop of the Instructor thread. |
-| `doom.sync()` | `Promise<String>` | Force syncs the internal memory queue to local storage. |
-| `doom.export()` | `Promise` | Generates a **Full System Snapshot** (Data + State + Errors) as JSON. |
-| `doom.wipe()` | `void` | Factory reset. Clears all learned data, storage, and reloads page. |
-| `doom.stackTrace()` | `Array<Object>` | Lists recent internal error logs with context and timestamps. |
+### 3. **Instructor (The Operator) ⚡**
+*Human-Mimic Execution Thread*
+- **Precision Targeting**: Receives direct DOM references from the Master for 100% accuracy.
+- **Stealth Engine**: Powered by `waeUtils` for Gaussian-randomized clicking, smooth scrolling, and variable-speed typing.
+- **Atomic Control**: Supports immediate emergency stops and task-state persistence.
 
 ---
 
-## 🚀 Core Capabilities
+## 🛠️ Developer API (`wae`)
 
-- **Surgical Filtering**: Precise targeting by `@user`, `#hashtag`, or `keyword` with logic conditions.
-- **Passive Intelligence**: Knowledge base builds automatically as you browse normally.
-- **Human behavior**: Evades detection through randomized patterns and smooth traversal.
-- **Triple-Thread Wipe**: Deep cleaning of RAM, Disk, and Discovery state for fresh starts.
+Control the engine directly from the browser console with a professional-grade API.
 
----
-
-## ⚙️ Installation & Usage
-
-1. **Load**: Enable **Developer mode** in `chrome://extensions/` and click **Load unpacked**.
-2. **Navigate**: Open Instagram (Explore, Profile, or Saved).
-3. **Configure**: Select activities and filters in the popup.
-4. **Deploy**: Hit **Play** or type `doom.start()` in console.
-
----
-
-## 🛡 Security & Privacy
-- **Local-Only**: Data never leaves your machine. No external trackers.
-- **Stealth**: Randomized interaction patterns to protect your account safety.
+| Command | Description |
+| :--- | :--- |
+| `wae.help()` | Displays the interactive command directory. |
+| `wae.start(targets, actions)` | Launches a new mission (e.g., `wae.start({limit:10}, ['LIKE', 'SAVE'])`). |
+| `wae.stop()` | Immediate emergency stop of all active threads. |
+| `wae.logs()` | Displays a professional `console.table` of internal engine logs. |
+| `wae.data()` | Inspects the current data held in Master's memory. |
+| `wae.state()` | Shows the real-time status of the engine (IDLE, SCANNING, EXECUTING). |
+| `wae.export()` | Generates and downloads a cleaned JSON export of all collected data. |
+| `wae.wipe()` | Factory reset: Clears all local storage and internal databases. |
 
 ---
 
-## 👨‍💻 Author
-Built with passion by **[publicwasant](https://github.com/publicwasant/doomscroll-bot)**.
-*"Rewriting history, one task at a time."*
+## 🚀 Key Features
+
+- **Enriched Data**: Scans for more than just links; captures captions, usernames, and media sources.
+- **Professional Logging**: Silent operation by default. Access detailed logs only when you need them via `wae.logs()`.
+- **Human-Mimicry 2.0**: Gaussian distribution for click offsets and smooth scroll behaviors.
+- **Platform Modularization**: Ready for expansion to Facebook, Threads, TikTok, etc., by simply adding new Platform Classes.
+- **Clean UI**: A modern, real-time dashboard for controlling missions and monitoring stats.
 
 ---
-**Universal Automation Framework** | **IG Doomscroll Bot v2.2.5**
+
+## 📁 Project Structure
+
+```text
+scripts/content/
+├── core/
+│   ├── Master.js           # Central Intelligence
+│   ├── BaseObserver.js     # Scout Prototype
+│   ├── BaseInstructor.js   # Operator Prototype
+│   └── platforms/
+│       └── instagram/      # IG Specific Implementation
+├── utils.js                # Stealth & Helper Suite
+├── bridge.js               # Console API (wae)
+├── engine.js               # Main Adapter
+└── main.js                 # Message Entry Point
+```
+
+---
+
+## ⚙️ Installation
+
+1. Clone this repository.
+2. Open Chrome and navigate to `chrome://extensions/`.
+3. Enable **Developer mode**.
+4. Click **Load unpacked** and select the project folder.
+5. Open Instagram and start your first mission via the popup or console!
+
+---
+
+## 👨‍💻 Evolved by
+**Web Automation Engine Team**
+*Architecture redesigned for Scalability, Stealth, and Precision.*
+
+---
+**Professional Web Automation** | **WAE v1.1.1**
